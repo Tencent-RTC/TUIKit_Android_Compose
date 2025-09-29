@@ -1,0 +1,18 @@
+<resources>
+
+    <string name="message_input_open_file_tips">اختر التطبيق الذي تريد استخدامه لفتح هذا الملف</string>
+    <string name="message_input_edit_text_hint">إرسال رسالة</string>
+    <string name="message_input_cancel">إلغاء</string>
+    <string name="message_input_album">الألبوم</string>
+    <string name="message_input_take_photo">التقاط صورة</string>
+    <string name="message_input_record_video">تسجيل فيديو</string>
+    <string name="message_input_file">ملف</string>
+    <string name="message_input_custom_message">رسالة مخصصة</string>
+    <string name="message_input_swipe_cancel_hint">اسحب لليمين للإلغاء، اترك للإرسال</string>
+    <string name="message_input_release_cancel_hint">اترك للإلغاء</string>
+    <string name="message_input_recording_too_short">مدة التسجيل قصيرة جدًا</string>
+    <string name="message_input_recording_time_exceeded">تم تجاوز وقت التسجيل</string>
+    <string name="message_input_recording_status">جاري التسجيل...</string>
+    <string name="message_input_send_failed">فشل الإرسال</string>
+
+</resources>

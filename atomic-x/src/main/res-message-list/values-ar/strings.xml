@@ -1,0 +1,78 @@
+<resources>
+    <string name="message_list_menu_more">المزيد</string>
+    <string name="message_list_menu_multi_select">تحديد متعدد</string>
+    <string name="message_list_menu_quote">اقتباس</string>
+    <string name="message_list_menu_reply">رد</string>
+    <string name="message_list_menu_info">معلومات</string>
+    <string name="message_list_menu_forward">إعادة توجيه</string>
+    <string name="message_list_menu_copy">نسخ</string>
+    <string name="message_list_menu_recall">سحب</string>
+    <string name="message_list_menu_delete">حذف</string>
+    <string name="message_list_create_group">إنشاء مجموعة</string>
+    <string name="message_list_create_community">إنشاء مجتمع</string>
+    <string name="message_list_open_file_tips">حدد تطبيقًا لفتح هذا الملف</string>
+    <string name="message_list_not_download">غير محمل</string>
+    <string name="message_list_you">أنت</string>
+    <string name="message_list_group_profile_auto_approval">الموافقة التلقائية</string>
+    <string name="message_list_group_profile_join_disable">تعطيل الانضمام</string>
+    <string name="message_list_group_profile_invite_disable">تعطيل الدعوة</string>
+    <string name="message_list_group_profile_admin_approve">موافقة المشرف</string>
+    <string name="message_list_message_tips_normal_recall_message">تم سحب رسالة</string>
+    <string name="message_list_message_tips_you_recall_message">لقد قمت بسحب رسالة</string>
+    <string name="message_list_message_tips_recall_message_format">\"%1$s\" قام بسحب رسالة</string>
+    <string name="message_list_message_tips_others_recall_message">قام الطرف الآخر بسحب رسالة</string>
+    <string name="message_list_message_tips_join_group_format">\"%1$s\" انضم إلى المجموعة</string>
+    <string name="message_list_message_tips_invite_join_group_format">\"%1$s\" يدعو \"%2$s\" للانضمام إلى المجموعة</string>
+    <string name="message_list_message_tips_leave_group_format">\"%1$s\" غادر المجموعة</string>
+    <string name="message_list_message_tips_kickoff_group_format">\"%1$s\" يطرد \"%2$s\" من المجموعة</string>
+    <string name="message_list_message_tips_set_admin_format">\"%1$s\" تم تعيينه مديرًا للمجموعة</string>
+    <string name="message_list_message_tips_cancel_admin_format">\"%1$s\" تم إزالة صلاحياته كمدير للمجموعة</string>
+    <string name="message_list_message_tips_edit_group_name_format">%1$s قام بتغيير اسم المجموعة إلى %2$s、</string>
+    <string name="message_list_message_tips_edit_group_intro_format">\"%1$s\" قام بتغيير وصف المجموعة إلى \"%2$s\"、</string>
+    <string name="message_list_message_tips_edit_group_announce_format">\"%1$s\" قام بتغيير إعلان المجموعة إلى \"%2$s\"、</string>
+    <string name="message_list_message_tips_delete_group_announce_format">\"%1$s\" قام بحذف إعلان المجموعة、</string>
+    <string name="message_list_message_tips_edit_group_avatar_format">\"%1$s\" قام بتغيير صورة المجموعة、</string>
+    <string name="message_list_message_tips_edit_group_owner_format">\"%1$s\" قام بنقل ملكية المجموعة إلى \"%2$s\"、</string>
+    <string name="message_list_message_tips_unsupport_custom_message">[رسالة مخصصة غير مدعومة]</string>
+    <string name="message_list_message_tips_mute">تم حظر الصوت</string>
+    <string name="message_list_message_tips_unmute">تم إلغاء حظر الصوت</string>
+    <string name="message_list_message_tips_group_pin_message">\"%1$s\"ثبتت رسالة</string>
+    <string name="message_list_message_tips_group_unpin_message">\"%1$s\"تم إلغاء تثبيت رسالة</string>
+    <string name="message_list_message_type_image">[صورة]</string>
+    <string name="message_list_message_type_voice">[تسجيل صوتي]</string>
+    <string name="message_list_message_type_video">[فيديو]</string>
+    <string name="message_list_message_type_file">[ملف]</string>
+    <string name="message_list_message_type_animate_emoji">[رمز تعبيري متحرك]</string>
+    <string name="message_list_set_mute_all_format">%1$s تم تمكين الحظر الكلي للمستخدمين،</string>
+    <string name="message_list_unmute_all_format">%1$s تم إلغاء الحظر الكلي للمستخدمين،</string>
+    <string name="message_list_message_tips_edit_group_add_opt_format">\"%1$s\" قام بتعديل طريقة الانضمام إلى المجموعة إلى \"%2$s\"</string>
+    <string name="message_list_message_tips_edit_group_invite_opt_format">\"%1$s\" قام بتعديل طريقة الدعوة إلى المجموعة إلى \"%2$s\"</string>
+    <string name="message_list_group_create_tips_message">إنشاء مجموعة</string>
+    <string name="message_list_community_create_tips_message">إنشاء مجتمع</string>
+    <string name="message_list_unknown">غير معروف</string>
+    <string name="message_list_merge_message">دمج الرسائل</string>
+    <string name="message_list_upgrade_latest_version">الرجاء الترقية إلى أحدث إصدار</string>
+
+    <plurals name="message_list_second">
+        <item quantity="zero">لا توجد ثوانٍ</item>
+        <item quantity="one">ثانية واحدة</item>
+        <item quantity="two">ثانيتان</item>
+        <item quantity="few">%d ثوانٍ</item>
+        <item quantity="many">%d ثانية</item>
+        <item quantity="other">%d ثانية</item>
+    </plurals>
+    <string name="message_list_min_second">%1$d دقيقة %2$d ثانية</string>
+    <string name="message_list_hour_min_second">%1$d ساعة %2$d دقيقة %3$d ثانية</string>
+    <plurals name="message_list_day">
+        <item quantity="zero">لا توجد أيام</item>
+        <item quantity="one">يوم واحد</item>
+        <item quantity="two">يومان</item>
+        <item quantity="few">%d أيام</item>
+        <item quantity="many">%d يوماً</item>
+        <item quantity="other">%d يوم</item>
+    </plurals>
+    <string name="message_list_day_hour_min_second">%1$d يوم %2$d ساعة %3$d دقيقة %4$d ثانية</string>
+
+    <string name="messaeg_list_resend_tips">هل أنت متأكد من إعادة الإرسال؟</string>
+
+</resources>

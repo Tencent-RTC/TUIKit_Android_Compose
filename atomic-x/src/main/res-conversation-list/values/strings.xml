@@ -1,0 +1,11 @@
+<resources>
+    <string name="conversation_list_more">More</string>
+    <string name="conversation_list_pin">Pin</string>
+    <string name="conversation_list_unpin">Unpin</string>
+    <string name="conversation_list_delete">Delete chat</string>
+    <string name="conversation_list_clear">Clear chat history</string>
+    <string name="conversation_list_mark_unread">Mark as unread</string>
+    <string name="conversation_list_mark_read">Mark as read</string>
+    <string name="conversation_list_message_count_unit">messages</string>
+
+</resources>

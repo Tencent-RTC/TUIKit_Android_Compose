@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <!-- Android 12 or lower -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Android 13 or higher -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+
+    <!-- Android 14 or higher -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+
+
+    <application>
+        <!--        <activity-->
+        <!--            android:name=".barrageinput.BarrageInputActivity"-->
+        <!--            android:exported="false"-->
+        <!--            android:screenOrientation="portrait"-->
+        <!--            android:theme="@style/TransparentActivity"-->
+        <!--            android:windowSoftInputMode="adjustResize" />-->
+
+        <activity
+            android:name="io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderBridgeActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <activity
+            android:name="io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderActivity"
+            android:exported="true" />
+
+        <activity
+            android:name="io.trtc.tuikit.atomicx.videoplayer.ui.VideoPlayerActivity"
+            android:exported="true" />
+        <activity
+            android:name=".imageviewer.ui.ImageViewerActivity"
+            android:exported="true" />
+
+        <provider
+            android:name="io.trtc.tuikit.atomicx.messagelist.utils.FileProvider"
+            android:authorities="${applicationId}.MessageList.FileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/message_list_file_paths" />
+        </provider>
+        <provider
+            android:name="io.trtc.tuikit.atomicx.messageinput.utils.FileProvider"
+            android:authorities="${applicationId}.MessageInput.FileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/message_input_file_paths" />
+        </provider>
+
+        <activity
+            android:name="io.trtc.tuikit.atomicx.albumpicker.ui.picker.AlbumPickerActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/BaseComponent.Theme.FullScreen" />
+
+        <activity
+            android:name="io.trtc.tuikit.atomicx.filepicker.impl.FilePickerBridgeActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <provider
+            android:name=".basecomponent.utils.ContextProvider"
+            android:authorities="${applicationId}.BaseComponent.ContextProvider"
+            android:exported="false"
+            android:initOrder="10000" />
+    </application>
+</manifest>

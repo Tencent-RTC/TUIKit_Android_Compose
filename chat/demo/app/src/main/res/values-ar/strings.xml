@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Chat</string>
+    <string name="compose_demo_settings">الإعدادات</string>
+    <string name="compose_demo_chat">الدردشة</string>
+    <string name="compose_demo_contacts">جهات الاتصال</string>
+    <string name="compose_demo_messages">الرسائل</string>
+    <string name="compose_demo_login">تسجيل الدخول</string>
+    <string name="compose_demo_logout">تسجيل الخروج</string>
+    <string name="compose_demo_language">اللغة</string>
+    <string name="compose_demo_theme">السمة</string>
+    <string name="compose_demo_zh_hans">الصينية المبسطة</string>
+    <string name="compose_demo_en">إنجليزي</string>
+    <string name="compose_demo_ar">عربي</string>
+    <string name="compose_demo_zh_hant">الصينية التقليدية</string>
+    <string name="compose_demo_current_language">عربي</string>
+    <string name="compose_demo_about_sdk_version">إصدار SDK</string>
+    <string name="compose_demo_about_im">حول</string>
+    <string name="compose_demo_theme_system">متابعة النظام</string>
+    <string name="compose_demo_theme_dark">مظلم</string>
+    <string name="compose_demo_theme_light">فاتح</string>
+    <string name="compose_demo_theme_custom">مخصص</string>
+    <string name="compose_demo_add_contact">إضافة جهة اتصال</string>
+    <string name="compose_demo_join_group">الانضمام إلى مجموعة</string>
+    <string name="compose_demo_start_c2c_chat">بدء محادثة خاصة</string>
+    <string name="compose_demo_create_group_chat">إنشاء محادثة جماعية</string>
+    <string name="compose_demo_input_user_id_tips">الرجاء إدخال معرف المستخدم</string>
+    <string name="compose_demo_add_rule">عند إضافتي كصديق</string>
+    <string name="compose_demo_allow_type_allow_any">السماح لأي شخص</string>
+    <string name="compose_demo_allow_type_deny_any">رفض أي شخص</string>
+    <string name="compose_demo_allow_type_need_confirm">يتطلب التحقق</string>
+    <string name="compose_demo_self_detail_title">التفاصيل</string>
+    <string name="compose_demo_self_detail_account">الحساب</string>
+    <string name="compose_demo_self_detail_nickname">الاسم المستعار</string>
+    <string name="compose_demo_self_detail_status">الحالة</string>
+    <string name="compose_demo_self_detail_gender">النوع</string>
+    <string name="compose_demo_self_detail_birthday">تاريخ الميلاد</string>
+    <string name="compose_demo_self_detail_gender_male">ذكر</string>
+    <string name="compose_demo_self_detail_gender_female">أنثى</string>
+    <string name="compose_demo_self_detail_gender_secret">سري</string>
+    <string name="compose_demo_self_detail_edit_nickname_title">تعديل الاسم المستعار</string>
+    <string name="compose_demo_self_detail_edit_nickname_placeholder">يرجى إدخال الاسم المستعار</string>
+    <string name="compose_demo_self_detail_edit_status_title">تعيين الحالة</string>
+    <string name="compose_demo_self_detail_edit_status_placeholder">ما الذي تفكر فيه الآن</string>
+</resources>

@@ -1,0 +1,11 @@
+<resources>
+    <string name="conversation_list_more">المزيد</string>
+    <string name="conversation_list_pin">تثبيت</string>
+    <string name="conversation_list_unpin">إلغاء التثبيت</string>
+    <string name="conversation_list_delete">حذف الدردشة</string>
+    <string name="conversation_list_clear">مسح سجل الدردشة</string>
+    <string name="conversation_list_mark_unread">وضع علامة كمقروء</string>
+    <string name="conversation_list_mark_read">وضع علامة كغير مقروء</string>
+    <string name="conversation_list_message_count_unit">رسائل</string>
+
+</resources>

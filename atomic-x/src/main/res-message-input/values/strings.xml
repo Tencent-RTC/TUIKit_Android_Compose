@@ -1,0 +1,19 @@
+<resources>
+
+    <string name="message_input_open_file_tips">Select an app to open the file</string>
+    <string name="message_input_edit_text_hint">Send a message</string>
+    <string name="message_input_cancel">Cancel</string>
+    <string name="message_input_album">Album</string>
+    <string name="message_input_take_photo">Take Photo</string>
+    <string name="message_input_record_video">Record Video</string>
+    <string name="message_input_file">File</string>
+    <string name="message_input_custom_message">Custom Message</string>
+    <string name="message_input_swipe_cancel_hint">Swipe left to cancel or release to send</string>
+    <string name="message_input_release_cancel_hint">Release to cancel</string>
+    <string name="message_input_recording_too_short">Recording too short</string>
+    <string name="message_input_recording_time_exceeded">Recording time exceeded</string>
+    <string name="message_input_recording_status">Recording...</string>
+    <string name="message_input_send_failed">Send failed</string>
+
+
+</resources>

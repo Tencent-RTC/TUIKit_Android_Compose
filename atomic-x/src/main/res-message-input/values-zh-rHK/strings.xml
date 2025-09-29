@@ -1,0 +1,18 @@
+<resources>
+
+    <string name="message_input_open_file_tips">選擇要打開此文件的應用</string>
+    <string name="message_input_edit_text_hint">發送訊息</string>
+    <string name="message_input_cancel">取消</string>
+    <string name="message_input_album">相簿</string>
+    <string name="message_input_take_photo">拍照</string>
+    <string name="message_input_record_video">錄影</string>
+    <string name="message_input_file">文件</string>
+    <string name="message_input_custom_message">自訂消息</string>
+    <string name="message_input_swipe_cancel_hint">向左滑動取消，鬆開發送</string>
+    <string name="message_input_release_cancel_hint">鬆開取消</string>
+    <string name="message_input_recording_too_short">錄製時間太短</string>
+    <string name="message_input_recording_time_exceeded">錄製時間超過限時</string>
+    <string name="message_input_recording_status">錄製中...</string>
+    <string name="message_input_send_failed">發送失敗</string>
+
+</resources>
