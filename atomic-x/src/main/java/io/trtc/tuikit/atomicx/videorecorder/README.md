@@ -1,78 +1,73 @@
-一 如果您在使用录制的时候提示"由于您的工程配置，您当前功能将受限...",这是因为视频录制的某些功能需要用到LiteAVSDK_Professional，而当前缺失该依赖。
+# 开启美颜/纵横比设置
 
-解决方法1：
-您需在gradle中添加如下代码，
-api "com.tencent.liteav:LiteAVSDK_Professional:latest.release"
-如果您的工程当前已经依赖 com.tencent.liteav:LiteAVSDK_TRTC,则需要去掉该依赖，否则会编译失败。
-LiteAVSDK_Professional完全包含了LiteAVSDK_TRTC的功能，去掉LiteAVSDK_TRTC依赖增加LiteAVSDK_Professional依赖不会让功能缺失。
+美颜和纵横比设置是 VideoRecorder 的高级功能。启用需满足以下条件：
 
-解决方法2:
-您可以在配置代码中屏蔽引起弹窗的相关功能
-配置文件位置：assets/video_recorder_config/video_recorder_config.json，配置文件如下:
-{
-  "max_record_duration_ms": "60000",
-  "min_record_duration_ms": "2000",
-  "video_quality": "2",
-  "primary_theme_color": "#147AFF",
-  "is_default_front_camera":"false",
-  "record_mode":"0",
-  "support_record_torch": "true",
-  "support_record_beauty": "true",
-  "support_record_aspect": "true",
-  "support_record_scroll_filter": "true"
+## 1. 依赖 TXLiteAVSDK_Professional
+
+在项目或任一模块的 Gradle 配置中添加依赖：
+
+```gradle
+dependencies {
+    api "com.tencent.liteav:LiteAVSDK_Professional:latest.release"
 }
-比如您如果想屏蔽美颜功能，将support_record_beauty项设置为false即可。如果没有依赖LiteAVSDK_Professional你可能需要屏蔽support_record_beauty，support_record_aspect，support_record_scroll_filter这三个功能
+```
+
+- 如果工程中任一模块已依赖 TXLiteAVSDK_TRTC，请将其替换为 TXLiteAVSDK_Professional（不会影响其他模块使用）。
+- 依赖 TXLiteAVSDK_Professional 后，可启用纵横比设置，兼容性与画质也会更好。
+
+## 2. 开通“多媒体高级功能”权限
+
+目前需通过内测申请开通“多媒体插件高级功能”（包含视频录制、音频录制、图片/视频编辑等能力）。
+
+- 申请入口：多媒体插件高级功能内测申请地址（https://cloud.tencent.com/apply/p/wlav0nzz7dp）。
+
+### 注意事项
+1. 提交后通常在 1 个工作日内完成审核。建议使用企业认证的腾讯云账号进行申请，以提升通过率。
+2. 内测使用日期截至 2026 年 7 月 1 日，届时所有内测使用权限将失效。
+3. 在内测截止日期之前，将上线高级功能的付费购买方案（购买方式与插件市场其他插件一致，详见“插件市场概述及开通指引”）。若到期未购买，美颜功能将被屏蔽（不显示美颜按钮）；购买后将自动恢复显示（除非在配置中被强制屏蔽）。
+
+## 3. 不同构建配置下的行为
+
+- Release：
+  - 若不满足启用条件，即使在配置中开启，高级功能也不会生效（相关按钮将自动隐藏）。
+- Debug：
+  - 点击不支持的功能时，会在 UI 中弹窗提示。
+  - 如需在 Debug 版本中也屏蔽这些功能，可在 Config 或配置文件中关闭对应开关（详见配置说明）。
 
 
 
-二 如果您在使用录制的时候提示"由于您未开通多媒体插件使用权限，您当前功能将受限...",这是因为视频录制的某些功能需要注册开通
+# Enable Beauty/Aspect Ratio Settings
 
-解决方法1：
-注册开通视频录制的高级功能并了解更多详细功能，请访问官方文档：https://cloud.tencent.com/document/product/269/113290
-解决方法2：
-屏蔽部份功能，屏蔽方法如问题一的解决方法2，您需要屏蔽support_record_beauty，support_record_scroll_filter这两项功能
+Beauty and aspect ratio settings are advanced features of VideoRecorder. To enable them, the following conditions must be met:
 
-  
-  
-I. If you encounter the prompt "Due to your project configuration, some features are currently restricted..." while using the recording function, this is because certain video recording features require LiteAVSDK_Professional, which is currently missing as a dependency.
+## 1. Depend on TXLiteAVSDK_Professional
 
-Solution 1:
+Add the dependency to your project or any module’s Gradle configuration:
 
-You need to add the following code to your gradle:
-
-api "com.tencent.liteav:LiteAVSDK_Professional:latest.release"
-
-If your project already depends on com.tencent.liteav:LiteAVSDK_TRTC, you must remove this dependency; otherwise, the compilation will fail.
-
-LiteAVSDK_Professional fully includes the functionality of LiteAVSDK_TRTC. Removing the LiteAVSDK_TRTC dependency and adding the LiteAVSDK_Professional dependency will not result in any loss of functionality.
-
-Solution 2:
-
-You can disable the relevant feature configurations that trigger the prompt in the configuration code.
-
-Configuration file location: assets/video_recorder_config/video_recorder_config.json. The configuration file is as follows:
-{
-  "max_record_duration_ms": "60000",
-  "min_record_duration_ms": "2000",
-  "video_quality": "2",
-  "primary_theme_color": "#147AFF",
-  "is_default_front_camera": "false",
-  "record_mode": "0",
-  "support_record_torch": "true",
-  "support_record_beauty": "true",
-  "support_record_aspect": "true",
-  "support_record_scroll_filter": "true"
+```gradle
+dependencies {
+    api "com.tencent.liteav:LiteAVSDK_Professional:latest.release"
 }
-For example, if you want to disable the beauty filter feature, set the support_record_beautyitem to false. If you have not added the LiteAVSDK_Professional dependency, you may need to disable the following three features: support_record_beauty, support_record_aspect, and support_record_scroll_filter.
+```
 
-II. If you encounter the prompt "Due to your lack of permissions for the multimedia plugin, some features are currently restricted..." while using the recording function, this is because certain video recording features require registration and activation.
+- If any module in your project already depends on TXLiteAVSDK_TRTC, replace it with TXLiteAVSDK_Professional (this will not affect other modules).
+- After switching to TXLiteAVSDK_Professional, aspect ratio settings will be available, and overall compatibility and image quality will be improved.
 
-Solution 1:
+## 2. Enable “Advanced Multimedia Features” Permission
 
-To register and activate the advanced features of video recording and learn more about the detailed functionalities, please refer to the official documentation:
+You currently need to apply for internal testing access to the “Advanced Multimedia Plugin Features” (including video recording, audio recording, photo/video editing, etc.).
 
-https://cloud.tencent.com/document/product/269/113290
+- Application link: Advanced Multimedia Plugin Features Early Access (https://cloud.tencent.com/apply/p/wlav0nzz7dp)
 
-Solution 2:
+### Notes
+1. Reviews are typically completed within one business day. We recommend applying with a Tencent Cloud enterprise-verified account to increase the approval rate.
+2. The internal testing access is valid until July 1, 2026. After that date, all early-access permissions will expire.
+3. A paid plan for advanced features will be available before the end of the early-access period (purchasing follows the same process as other plugins; see “Plugin Marketplace Overview and Activation Guide”). If not purchased upon expiration, the beauty feature will be disabled (the beauty button will be hidden). It will automatically reappear after purchase (unless explicitly disabled via configuration).
 
-Disable some of the features. The method to disable them is the same as Solution 2 for Issue I. You need to disable the following two features: support_record_beautyand support_record_scroll_filter.
+## 3. Behavior in Different Build Configurations
+
+- Release:
+  - If prerequisites are not met, the advanced features will not work even if enabled in the configuration (related buttons will be automatically hidden).
+- Debug:
+  - Tapping unsupported features will trigger a UI toast/dialog message.
+  - If you wish to hide these features in Debug as well, disable the corresponding switches in the Config or the configuration file (see configuration documentation).

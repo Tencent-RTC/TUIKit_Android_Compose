@@ -2,8 +2,8 @@ package io.trtc.tuikit.atomicx.chatsetting.viewmodels
 
 import androidx.lifecycle.ViewModel
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
-import io.trtc.tuikit.atomicxcore.api.GroupMemberRole
-import io.trtc.tuikit.atomicxcore.api.GroupSettingStore
+import io.trtc.tuikit.atomicxcore.api.contact.GroupMemberRole
+import io.trtc.tuikit.atomicxcore.api.contact.GroupSettingStore
 
 class GroupMemberListViewModel(private val groupID: String) : ViewModel() {
 

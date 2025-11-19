@@ -4,16 +4,22 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import io.trtc.tuikit.atomicx.basecomponent.utils.ContextProvider
-import io.trtc.tuikit.atomicx.videorecorder.RecordListener
+import io.trtc.tuikit.atomicx.videorecorder.VideoRecordListener
 import io.trtc.tuikit.atomicx.videorecorder.RecordMode
-import io.trtc.tuikit.atomicx.videorecorder.TakeVideoConfig
-import io.trtc.tuikit.atomicx.videorecorder.VideoRecordeErrorCode
-import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfig
+import io.trtc.tuikit.atomicx.videorecorder.VideoRecorderConfig
+import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfigInternal
+import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecorderSignatureChecker
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderPermissionHelper
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderPermissionHelper.PermissionCallback
 import io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderBridgeActivity
 
-class VideoRecorderImpl {
+class VideoRecorderViewImpl {
+    companion object {
+        init {
+            VideoRecorderSignatureChecker.getInstance().startUpdateSignature()
+        }
+    }
+
     private val TAG = "VideoRecorderImpl"
 
     /**
@@ -24,7 +30,7 @@ class VideoRecorderImpl {
      *                 - Video recording success
      *                 - Error events
      */
-    fun takeVideo(config: TakeVideoConfig?, callback: RecordListener?) {
+    fun takeVideo(config: VideoRecorderConfig?, callback: VideoRecordListener?) {
         val context = ContextProvider.appContext
         if (callback == null) {
             Log.e(TAG, "start record fail. context or callback is null")
@@ -34,17 +40,22 @@ class VideoRecorderImpl {
         val isPhotoOnly = config?.recordMode == RecordMode.PHOTO_ONLY
         videoRecodePermissionRequest(isPhotoOnly, object : PermissionCallback {
             override fun onGranted() {
-                VideoRecorderConfig.getInstance().setConfig(config)
+                VideoRecorderConfigInternal.getInstance().setConfig(config)
                 startRecordInternal(context, callback)
             }
 
             override fun onDenied() {
-                callback.onError(VideoRecordeErrorCode.PERMISSION_DENIED)
+                print("Failed to obtain device permissions");
+                if (isPhotoOnly) {
+                    callback.onPhotoCaptured(null)
+                } else {
+                    callback.onVideoCaptured(null, 0)
+                }
             }
         })
     }
 
-    private fun startRecordInternal(context: Context, callback: RecordListener) {
+    private fun startRecordInternal(context: Context, callback: VideoRecordListener) {
         val intent = Intent(context, VideoRecorderBridgeActivity::class.java)
         VideoRecorderBridgeActivity.callback = callback
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

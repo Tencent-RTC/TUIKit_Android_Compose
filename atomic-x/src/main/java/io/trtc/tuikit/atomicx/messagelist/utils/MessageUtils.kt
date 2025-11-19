@@ -7,10 +7,10 @@ import com.google.gson.reflect.TypeToken
 import com.tencent.imsdk.v2.V2TIMMessage
 import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.basecomponent.utils.ContextProvider
-import io.trtc.tuikit.atomicxcore.api.GroupJoinOption
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
-import io.trtc.tuikit.atomicxcore.api.MessageType
-import io.trtc.tuikit.atomicxcore.api.SystemMessageInfo
+import io.trtc.tuikit.atomicxcore.api.contact.GroupJoinOption
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageType
+import io.trtc.tuikit.atomicxcore.api.message.SystemMessageInfo
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date

@@ -43,8 +43,8 @@ import io.trtc.tuikit.atomicx.contactlist.utils.displayName
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.ContactListViewModel
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.ContactListViewModelFactory
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.DefaultContactItem
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
 
 val LocalContactViewModel =
     compositionLocalOf<ContactListViewModel> { error("No ViewModel provided") }
@@ -52,11 +52,11 @@ val LocalContactViewModel =
 @Composable
 fun ContactList(
     modifier: Modifier = Modifier,
+    onGroupClick: (ContactInfo) -> Unit = {},
+    onContactClick: (ContactInfo) -> Unit = {},
     contactListViewModelFactory: ContactListViewModelFactory = ContactListViewModelFactory(
         ContactListStore.create()
     ),
-    onGroupClick: (ContactInfo) -> Unit = {},
-    onContactClick: (ContactInfo) -> Unit = {},
 ) {
     val colors = LocalTheme.current.colors
     val contactViewModel =

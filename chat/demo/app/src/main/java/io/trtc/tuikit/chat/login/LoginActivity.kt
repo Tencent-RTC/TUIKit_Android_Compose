@@ -37,7 +37,7 @@ import com.tencent.mmkv.MMKV
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Toast
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
-import io.trtc.tuikit.atomicxcore.api.LoginStore
+import io.trtc.tuikit.atomicxcore.api.login.LoginStore
 import io.trtc.tuikit.chat.BaseActivity
 import io.trtc.tuikit.chat.MainActivity
 import io.trtc.tuikit.chat.R

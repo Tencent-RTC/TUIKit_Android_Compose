@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

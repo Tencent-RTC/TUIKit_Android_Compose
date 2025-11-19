@@ -43,8 +43,7 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Avatar
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Switch
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
-import io.trtc.tuikit.atomicxcore.api.GroupMember
-
+import io.trtc.tuikit.atomicxcore.api.contact.GroupMember
 
 @Composable
 fun GroupManagementDialog(

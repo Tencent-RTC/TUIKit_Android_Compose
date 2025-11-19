@@ -11,7 +11,7 @@ import coil3.compose.AsyncImage
 import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageRenderer
 import io.trtc.tuikit.atomicx.messagelist.utils.ImageUtils
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 
 class FaceMessageRenderer : MessageRenderer<MessageInfo> {
 

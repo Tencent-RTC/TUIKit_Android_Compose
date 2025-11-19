@@ -40,9 +40,9 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Avatar
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.messageinput.ui.MessageInput
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageList
-import io.trtc.tuikit.atomicxcore.api.ConversationInfo
-import io.trtc.tuikit.atomicxcore.api.ConversationListStore
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationInfo
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationListStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map

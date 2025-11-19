@@ -6,8 +6,8 @@ import com.tencent.imsdk.v2.V2TIMGroupMemberFullInfo
 import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.ActionItem
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.ActionSheet
-import io.trtc.tuikit.atomicxcore.api.GroupMember
-import io.trtc.tuikit.atomicxcore.api.GroupMemberRole
+import io.trtc.tuikit.atomicxcore.api.contact.GroupMember
+import io.trtc.tuikit.atomicxcore.api.contact.GroupMemberRole
 
 @Composable
 fun GroupMemberActionSheet(

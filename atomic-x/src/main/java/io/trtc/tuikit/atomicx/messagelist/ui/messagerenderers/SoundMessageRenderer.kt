@@ -26,7 +26,7 @@ import io.trtc.tuikit.atomicx.messagelist.ui.LocalMessageInteraction
 import io.trtc.tuikit.atomicx.messagelist.ui.LocalMessageListViewModel
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageRenderer
 import io.trtc.tuikit.atomicx.messagelist.utils.DateTimeUtils
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 import kotlin.math.roundToInt
 
 class SoundMessageRenderer : MessageRenderer<MessageInfo> {

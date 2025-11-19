@@ -25,7 +25,7 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Avatar
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AvatarSize
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.contactlist.utils.displayName
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
 
 @Composable
 fun ContactDetail(

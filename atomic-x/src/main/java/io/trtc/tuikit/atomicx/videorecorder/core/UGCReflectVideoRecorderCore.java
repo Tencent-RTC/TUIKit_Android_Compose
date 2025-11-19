@@ -20,6 +20,15 @@ public class UGCReflectVideoRecorderCore implements IVideoRecorderCoreInterface 
     private Class<?> mListenerInterface;
     private IVideoRecordListener mListener;
 
+    public static boolean isAvailable() {
+        try {
+            Class<?> clazz = Class.forName("com.tencent.ugc.TXUGCRecord");
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
     public UGCReflectVideoRecorderCore(Context context) throws Exception {
         mContext = context;
         Class<?> clazz = Class.forName("com.tencent.ugc.TXUGCRecord");

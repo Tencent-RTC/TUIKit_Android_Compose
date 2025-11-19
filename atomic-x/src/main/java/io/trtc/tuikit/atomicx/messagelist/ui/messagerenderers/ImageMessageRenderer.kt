@@ -15,7 +15,7 @@ import io.trtc.tuikit.atomicx.messagelist.ui.LocalMessageInteraction
 import io.trtc.tuikit.atomicx.messagelist.ui.LocalMessageListViewModel
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageRenderer
 import io.trtc.tuikit.atomicx.messagelist.utils.ImageUtils
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 
 class ImageMessageRenderer : MessageRenderer<MessageInfo> {
 

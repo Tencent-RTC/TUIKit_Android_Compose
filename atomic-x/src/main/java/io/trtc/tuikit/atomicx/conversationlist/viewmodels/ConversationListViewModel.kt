@@ -5,22 +5,21 @@ import androidx.compose.ui.util.fastDistinctBy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.trtc.tuikit.atomicx.R
-import io.trtc.tuikit.atomicx.basecomponent.config.AppBuilderConfig
-import io.trtc.tuikit.atomicx.basecomponent.config.ConversationAction
+import io.trtc.tuikit.atomicx.conversationlist.config.ConversationActionConfigProtocol
 import io.trtc.tuikit.atomicx.conversationlist.model.ConversationActionType
 import io.trtc.tuikit.atomicx.conversationlist.model.ConversationMenuAction
 import io.trtc.tuikit.atomicx.messagelist.utils.collectAsState
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
-import io.trtc.tuikit.atomicxcore.api.ConversationFetchOption
-import io.trtc.tuikit.atomicxcore.api.ConversationInfo
-import io.trtc.tuikit.atomicxcore.api.ConversationListStore
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationFetchOption
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationInfo
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationListStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-class ConversationViewModel(val conversationListStore: ConversationListStore) : ViewModel() {
+class ConversationListViewModel(val conversationListStore: ConversationListStore) : ViewModel() {
     val conversationListState = conversationListStore.conversationListState
     val hasMoreConversation by collectAsState(conversationListState.hasMoreConversation)
     val conversationList by collectAsState(
@@ -68,7 +67,10 @@ class ConversationViewModel(val conversationListStore: ConversationListStore) : 
     override fun onCleared() {
     }
 
-    fun getActions(conversationInfo: ConversationInfo): List<ConversationMenuAction> {
+    fun getActions(
+        conversationInfo: ConversationInfo,
+        config: ConversationActionConfigProtocol
+    ): List<ConversationMenuAction> {
 
         val pinAction = ConversationMenuAction().apply {
             if (conversationInfo.isPinned) {
@@ -90,15 +92,13 @@ class ConversationViewModel(val conversationListStore: ConversationListStore) : 
             type = ConversationActionType.DELETE
         )
         return mutableListOf<ConversationMenuAction>().apply {
-            val configActionList = AppBuilderConfig.conversationActionList
-            if (
-                configActionList.contains(ConversationAction.PIN)) {
+            if (config.isSupportPin) {
                 add(pinAction)
             }
-            if (configActionList.contains(ConversationAction.CLEAR_HISTORY)) {
+            if (config.isSupportClearHistory) {
                 add(clearAction)
             }
-            if (configActionList.contains(ConversationAction.DELETE)) {
+            if (config.isSupportDelete) {
                 add(deleteAction)
             }
         }

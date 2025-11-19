@@ -44,13 +44,12 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.ActionSheet
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Avatar
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AvatarSize
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
-import io.trtc.tuikit.atomicx.basecomponent.theme.DefaultTheme
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.basecomponent.theme.ThemeMode
-import io.trtc.tuikit.atomicxcore.api.AllowType
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
-import io.trtc.tuikit.atomicxcore.api.LoginStore
-import io.trtc.tuikit.atomicxcore.api.UserProfile
+import io.trtc.tuikit.atomicxcore.api.login.AllowType
+import io.trtc.tuikit.atomicxcore.api.login.LoginStore
+import io.trtc.tuikit.atomicxcore.api.login.UserProfile
 import io.trtc.tuikit.chat.login.LoginActivity
 import io.trtc.tuikit.chat.viewmodels.SettingsViewModel
 import io.trtc.tuikit.chat.viewmodels.displayName
@@ -136,7 +135,7 @@ fun SettingsScreen() {
 
             SettingsItem(
                 title = stringResource(R.string.compose_demo_theme),
-                value = getThemeString(LocalTheme.current.currentTheme.mode),
+                value = getThemeString(LocalTheme.current.currentMode),
                 showDivider = true,
                 onClick = {
                     showThemeSelector = true
@@ -212,6 +211,7 @@ fun SettingsScreen() {
             })
         }
 
+        val themeState = LocalTheme.current
         ActionSheet(
             showThemeSelector, options = listOf(
                 ActionItem(
@@ -224,9 +224,9 @@ fun SettingsScreen() {
             ), onDismiss = { showThemeSelector = false }) {
             if (it.value == "#Custom") {
                 val color = (0..0xFFFFFF).random()
-                DefaultTheme.setPrimaryColor("#${color.toString(16).padStart(6, '0')}")
+                themeState.setPrimaryColor("#${color.toString(16).padStart(6, '0')}")
             } else {
-                DefaultTheme.setThemeMode(it.value as ThemeMode)
+                themeState.setThemeMode(it.value as ThemeMode)
             }
         }
 

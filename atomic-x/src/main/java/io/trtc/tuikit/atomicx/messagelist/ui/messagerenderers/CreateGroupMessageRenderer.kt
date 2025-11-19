@@ -13,7 +13,7 @@ import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageRenderer
 import io.trtc.tuikit.atomicx.messagelist.utils.jsonData2Dictionary
 import io.trtc.tuikit.atomicx.messagelist.utils.messageSenderDisplayName
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 
 class CreateGroupMessageRenderer : MessageRenderer<MessageInfo> {
     @Composable
@@ -23,7 +23,7 @@ class CreateGroupMessageRenderer : MessageRenderer<MessageInfo> {
         val customInfo = message.messageBody?.customMessage?.data
         val dict = jsonData2Dictionary(customInfo)
 
-        val isCommunity = dict?.getValue("cmd") as? Double == 1.0
+        val isCommunity = dict?.get("cmd") as? Double == 1.0
         val senderName = message.rawMessage?.messageSenderDisplayName
         val text = "$senderName " +
                 if (isCommunity) stringResource(R.string.message_list_create_community)

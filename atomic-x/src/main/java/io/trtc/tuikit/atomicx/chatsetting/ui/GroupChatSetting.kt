@@ -47,11 +47,11 @@ import io.trtc.tuikit.atomicx.chatsetting.permission.GroupPermissionManager
 import io.trtc.tuikit.atomicx.chatsetting.viewmodels.GroupChatSettingViewModel
 import io.trtc.tuikit.atomicx.chatsetting.viewmodels.GroupChatSettingViewModelFactory
 import io.trtc.tuikit.atomicx.chatsetting.viewmodels.getGroupAvatarUrls
-import io.trtc.tuikit.atomicxcore.api.GroupJoinOption
-import io.trtc.tuikit.atomicxcore.api.GroupMember
-import io.trtc.tuikit.atomicxcore.api.GroupMemberRole
-import io.trtc.tuikit.atomicxcore.api.GroupType
-import io.trtc.tuikit.atomicxcore.api.LoginStore
+import io.trtc.tuikit.atomicxcore.api.contact.GroupJoinOption
+import io.trtc.tuikit.atomicxcore.api.contact.GroupMember
+import io.trtc.tuikit.atomicxcore.api.contact.GroupMemberRole
+import io.trtc.tuikit.atomicxcore.api.contact.GroupType
+import io.trtc.tuikit.atomicxcore.api.login.LoginStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

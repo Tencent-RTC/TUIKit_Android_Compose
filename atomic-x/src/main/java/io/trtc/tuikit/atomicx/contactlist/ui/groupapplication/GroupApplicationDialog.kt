@@ -9,8 +9,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.GroupApplicationViewModel
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.GroupApplicationViewModelFactory
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
-import io.trtc.tuikit.atomicxcore.api.GroupApplicationInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.contact.GroupApplicationInfo
 
 
 @Composable

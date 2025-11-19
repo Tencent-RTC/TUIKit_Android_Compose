@@ -28,7 +28,7 @@ fun SetDialogSystemBarAppearance() {
 @Composable
 fun SetWindowSystemBarAppearance(window: Window?) {
     val theme = LocalTheme.current
-    val colorScheme = theme.currentTheme.mode
+    val colorScheme = theme.currentMode
     val isDarkMode = when (colorScheme) {
         ThemeMode.DARK -> true
         ThemeMode.LIGHT -> false

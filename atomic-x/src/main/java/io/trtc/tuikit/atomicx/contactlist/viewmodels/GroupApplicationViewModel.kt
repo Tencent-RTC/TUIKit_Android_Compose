@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
-import io.trtc.tuikit.atomicxcore.api.GroupApplicationInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.contact.GroupApplicationInfo
 import kotlinx.coroutines.launch
 
 class GroupApplicationViewModel(

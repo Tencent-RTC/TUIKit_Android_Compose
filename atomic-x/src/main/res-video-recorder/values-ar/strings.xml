@@ -81,6 +81,10 @@
     <string name="video_recorder_request_permission_media_reason">مطلوب الوصول إلى الصور والفيديوهات لإرسال الصور والفيديوهات من الألبوم وحفظ الصور والفيديوهات في الدردشة</string>
     <string name="video_recorder_request_permission_media_tip">افتح صلاحيات الصور والفيديوهات في الإعدادات-التطبيقات-%s-الصلاحيات لاستخدام إرسال الصور والفيديوهات من الألبوم وحفظ الصور في الدردشة بشكل طبيعي</string>
 
+    <string name="audio_authorization_prompter">التكوين الحالي لا يمكن تمكين منظمة العفو الدولية للحد من الضوضاء . تصحيح الإصدارات ف</string>
+    <string name="audio_recorder_less_than_min_time">تسجيل الصوت طويل جدا و قصير جدا</string>
+    <string name="audio_record_time_limit_reached">لقد تم الوصول إلى الحد الزمني لتسجيل الصوت</string>
+
     <string name="video_recorder_authorization_prompter">الوظيفة الحالية الخاصة بك سوف تكون محدودة بسبب عدم تمكين الوسائط المتعددة المكونات الإضافية .</string>
     <string name="video_recorder_authorization_prompter_accessing_documents">1 . يمكنك الوصول إلى الملفات التالية لفتح الوسائط المتعددة المكونات في الأذونات : الوسائط المتعددة المكونات في فتح المبادئ التوجيهية</string>
     <string name="video_recorder_authorization_prompter_remove_module">2 . يمكنك أيضا منع هذه الميزة في ملف التكوين ( ملف التكوين موقع assets / editor_config.json المشروع )</string>

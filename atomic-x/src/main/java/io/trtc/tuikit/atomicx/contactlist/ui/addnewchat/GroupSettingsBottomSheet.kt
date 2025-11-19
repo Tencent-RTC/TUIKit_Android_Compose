@@ -54,7 +54,7 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AvatarSize
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.AddNewChatViewModel
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.getGroupAvatarUrls
-import io.trtc.tuikit.atomicxcore.api.GroupType
+import io.trtc.tuikit.atomicxcore.api.contact.GroupType
 
 @Composable
 fun GroupSettingsBottomSheet(

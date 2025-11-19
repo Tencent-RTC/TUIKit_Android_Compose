@@ -9,8 +9,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.FriendApplicationViewModel
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.FriendApplicationViewModelFactory
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
-import io.trtc.tuikit.atomicxcore.api.FriendApplicationInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.contact.FriendApplicationInfo
 
 
 @Composable

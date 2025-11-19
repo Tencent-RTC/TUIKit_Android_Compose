@@ -6,14 +6,15 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import io.trtc.tuikit.atomicx.videorecorder.RecordListener
-import io.trtc.tuikit.atomicx.videorecorder.VideoRecordeErrorCode
+import io.trtc.tuikit.atomicx.videorecorder.RecordMode
+import io.trtc.tuikit.atomicx.videorecorder.VideoRecordListener
+import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfigInternal
 import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConstants
 
 class VideoRecorderBridgeActivity : ComponentActivity() {
     companion object {
         private const val TAG = "VideoRecorderBridge"
-        var callback: RecordListener? = null
+        var callback: VideoRecordListener? = null
     }
 
     class VideoRecordResult {
@@ -23,21 +24,31 @@ class VideoRecorderBridgeActivity : ComponentActivity() {
     }
 
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        var finalPath: String? = null
+        var recordResult:VideoRecordResult? = null
         if (result.resultCode != RESULT_OK) {
             Log.i(TAG, "The activity did not return RESULT_OK, indicating the operation was canceled or failed.")
-            callback?.onError(VideoRecordeErrorCode.RECORDE_CANCEL)
         } else {
-            val recordResult: VideoRecordResult? = getRecodeResult(result)
-            val recodeFilePath = recordResult?.filePath
-            Log.i(TAG, "recode file complete. path is $recodeFilePath")
-            if (recodeFilePath.isNullOrEmpty()) {
-                callback?.onError(VideoRecordeErrorCode.RECORDE_INNER_ERROR)
+            recordResult = getRecodeResult(result)
+            finalPath = recordResult?.filePath
+            Log.i(TAG, "recode file complete. path is $finalPath")
+            if (finalPath.isNullOrEmpty()) {
+                print("recode file path.is null or empty")
+                finalPath = null
+            }
+        }
+
+        if (recordResult == null) {
+            if (VideoRecorderConfigInternal.getInstance().getRecordMode() == RecordMode.PHOTO_ONLY) {
+                callback?.onPhotoCaptured(null)
             } else {
-                if (recordResult.type == VideoRecorderConstants.RECORD_TYPE_VIDEO) {
-                    callback?.onVideoCaptured(recodeFilePath, recordResult.duration)
-                } else {
-                    callback?.onPhotoCaptured(recodeFilePath)
-                }
+                callback?.onVideoCaptured(null, 0)
+            }
+        } else {
+            if (recordResult.type == VideoRecorderConstants.RECORD_TYPE_VIDEO) {
+                callback?.onVideoCaptured(finalPath, recordResult.duration)
+            } else {
+                callback?.onPhotoCaptured(finalPath)
             }
         }
         finish()

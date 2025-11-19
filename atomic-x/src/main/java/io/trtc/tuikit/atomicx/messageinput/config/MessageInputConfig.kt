@@ -1,22 +1,46 @@
 package io.trtc.tuikit.atomicx.messageinput.config
 
-import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.compositionLocalOf
 
-val LocalMessageInputConfig = staticCompositionLocalOf { MessageInputConfig.Default }
+val LocalMessageInputConfig = compositionLocalOf<MessageInputConfigProtocol> { ChatMessageInputConfig() }
 
-class MessageInputConfig {
+interface MessageInputConfigProtocol {
+    val isShowAudioRecorder: Boolean
+    val isShowPhotoTaker: Boolean
+    val isShowMore: Boolean
+}
 
-    companion object {
-        private val _default = MessageInputConfig()
-        val Default: MessageInputConfig get() = _default
+class ChatMessageInputConfig : MessageInputConfigProtocol {
 
-        fun configure(block: MessageInputConfig.() -> Unit) {
-            _default.apply(block)
-        }
+    private var _isShowAudioRecorder: Boolean? = null
+    private var _isShowPhotoTaker: Boolean? = null
+    private var _isShowMore: Boolean? = null
+
+    constructor(
+        isShowAudioRecorder: Boolean? = null,
+        isShowPhotoTaker: Boolean? = null,
+        isShowMore: Boolean? = null
+    ) {
+        this._isShowAudioRecorder = isShowAudioRecorder
+        this._isShowPhotoTaker = isShowPhotoTaker
+        this._isShowMore = isShowMore
     }
 
-    var autoFocus = false
-    var disableMention = false
-    var enableTypingStatus = true
-    var placeHolder = "Send a message"
+    override var isShowAudioRecorder: Boolean
+        get() = _isShowAudioRecorder ?: true
+        set(value) {
+            _isShowAudioRecorder = value
+        }
+
+    override var isShowPhotoTaker: Boolean
+        get() = _isShowPhotoTaker ?: true
+        set(value) {
+            _isShowPhotoTaker = value
+        }
+
+    override var isShowMore: Boolean
+        get() = _isShowMore ?: true
+        set(value) {
+            _isShowMore = value
+        }
 }

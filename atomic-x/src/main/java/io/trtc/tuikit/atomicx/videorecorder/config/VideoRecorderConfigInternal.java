@@ -3,19 +3,15 @@ package io.trtc.tuikit.atomicx.videorecorder.config;
 import android.util.Log;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.InstanceCreator;
 import com.google.gson.JsonObject;
-import com.google.gson.annotations.SerializedName;
 
 import io.trtc.tuikit.atomicx.videorecorder.RecordMode;
-import io.trtc.tuikit.atomicx.videorecorder.TakeVideoConfig;
+import io.trtc.tuikit.atomicx.videorecorder.VideoRecorderConfig;
 import io.trtc.tuikit.atomicx.videorecorder.VideoQuality;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderFileUtil;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderResourceUtils;
-import java.lang.reflect.Type;
 
-public class VideoRecorderConfig {
+public class VideoRecorderConfigInternal {
 
     static final String TAG = "VideoRecorderConfig";
     static final String DEFAULT_JSON_PATH = "file:///asset/video_recorder_config/video_recorder_config.json";
@@ -23,17 +19,17 @@ public class VideoRecorderConfig {
     static final int DEFAULT_MIN_RECORD_DURATION_MS = 2000;
     static final String  DEFAULT_PRIMARY_THEME_COLOR = "#147AFF";
 
-    private static VideoRecorderConfig sInstance;
+    private static VideoRecorderConfigInternal sInstance;
     private final int mVideoQuality = VideoQuality.MEDIUM.getValue();
     private final int mRecordMode = RecordMode.MIXED.getValue();
     private JsonObject mJsonObject;
-    private TakeVideoConfig mConfig;
+    private VideoRecorderConfig mConfig;
 
-    public static VideoRecorderConfig getInstance() {
+    public static VideoRecorderConfigInternal getInstance() {
         if (sInstance == null) {
-            synchronized (VideoRecorderConfig.class) {
+            synchronized (VideoRecorderConfigInternal.class) {
                 if (sInstance == null) {
-                    sInstance = new VideoRecorderConfig();
+                    sInstance = new VideoRecorderConfigInternal();
 
                     String json = VideoRecorderFileUtil.readTextFromFile(DEFAULT_JSON_PATH);
                     Log.i(TAG, "initDefaultConfig json = " + json);
@@ -47,7 +43,7 @@ public class VideoRecorderConfig {
         return sInstance;
     }
 
-    public void setConfig(TakeVideoConfig config) {
+    public void setConfig(VideoRecorderConfig config) {
         mConfig = config;
     }
 
@@ -60,18 +56,30 @@ public class VideoRecorderConfig {
     }
 
     public boolean isSupportRecordBeauty() {
+        if (mConfig != null && mConfig.isSupportBeauty() != null) {
+            return mConfig.isSupportBeauty();
+        }
         return getBoolFromJsonObject("support_record_beauty", true);
     }
 
     public boolean isSupportRecordAspect() {
+        if (mConfig != null && mConfig.isSupportAspect() != null) {
+            return mConfig.isSupportAspect();
+        }
         return getBoolFromJsonObject("support_record_aspect", true);
     }
 
     public boolean isSupportRecordTorch() {
+        if (mConfig != null && mConfig.isSupportTorch() != null) {
+            return mConfig.isSupportTorch();
+        }
         return getBoolFromJsonObject("support_record_torch", true);
     }
 
     public boolean isSupportRecordScrollFilter() {
+        if (mConfig != null && mConfig.isSupportRecordScrollFilter() != null) {
+            return mConfig.isSupportRecordScrollFilter();
+        }
         return getBoolFromJsonObject("support_record_scroll_filter", true);
     }
 
@@ -84,15 +92,15 @@ public class VideoRecorderConfig {
     }
 
     public int getMaxRecordDurationMs() {
-        if (mConfig != null && mConfig.getMaxVideoDuration() != null) {
-            return Math.max(mConfig.getMaxVideoDuration(), 3000);
+        if (mConfig != null && mConfig.getMaxDurationMs() != null) {
+            return Math.max(mConfig.getMaxDurationMs(), 3000);
         }
         return Math.max(getIntFromJsonObject("max_record_duration_ms", DEFAULT_MAX_RECORD_DURATION_MS), 3000);
     }
 
     public int getMinRecordDurationMs() {
-        if (mConfig != null && mConfig.getMinVideoDuration() != null) {
-            return mConfig.getMinVideoDuration();
+        if (mConfig != null && mConfig.getMinDurationMs() != null) {
+            return mConfig.getMinDurationMs();
         }
         return getIntFromJsonObject("min_record_duration_ms", DEFAULT_MIN_RECORD_DURATION_MS);
     }
@@ -116,8 +124,8 @@ public class VideoRecorderConfig {
     }
 
     public boolean getIsDefaultFrontCamera() {
-        if (mConfig != null && mConfig.getDefaultFrontCamera() != null) {
-            return mConfig.getDefaultFrontCamera();
+        if (mConfig != null && mConfig.isDefaultFrontCamera() != null) {
+            return mConfig.isDefaultFrontCamera();
         }
 
         return sInstance.getBoolFromJsonObject("is_default_front_camera", false);

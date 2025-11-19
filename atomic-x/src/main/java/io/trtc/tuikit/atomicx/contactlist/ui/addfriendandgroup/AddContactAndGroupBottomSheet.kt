@@ -58,9 +58,9 @@ import io.trtc.tuikit.atomicx.contactlist.viewmodels.AddContactAndGroupUiState
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.AddContactAndGroupViewModel
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.AddContactAndGroupViewModelFactory
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.AddType
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
-import io.trtc.tuikit.atomicxcore.api.ContactType
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.contact.ContactType
 
 enum class FlowStep {
     SEARCH,

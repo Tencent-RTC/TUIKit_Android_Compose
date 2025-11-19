@@ -53,12 +53,11 @@ import io.trtc.tuikit.atomicx.contactlist.ui.addnewchat.AddNewChatBottomSheet
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.AddType
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.ChatType
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
-import io.trtc.tuikit.atomicxcore.api.ConversationListStore
-import io.trtc.tuikit.atomicxcore.api.LoginStatus
-import io.trtc.tuikit.atomicxcore.api.LoginStore
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationListStore
+import io.trtc.tuikit.atomicxcore.api.login.LoginStatus
+import io.trtc.tuikit.atomicxcore.api.login.LoginStore
 import io.trtc.tuikit.chat.chat.ChatActivity
-import io.trtc.tuikit.chat.chatsetting.ChatSettingActivity
 import io.trtc.tuikit.chat.login.LoginActivity
 import io.trtc.tuikit.chat.pages.ContactsPage
 import io.trtc.tuikit.chat.pages.ConversationsPage
@@ -285,10 +284,19 @@ private fun ContactsScreen() {
     var showAddContactSheet by remember { mutableStateOf(false) }
     var addType by remember { mutableStateOf(AddType.CONTACT) }
     val context = LocalContext.current
+    val activity = LocalActivity.current
     ContactsPage(onGroupClick = {
-        ChatSettingActivity.start(context, "", it.contactID, true)
+        activity?.startActivity(
+            Intent(activity, ChatActivity::class.java).apply {
+                putExtra("conversationID", "group_${it.contactID}")
+            }
+        )
     }, onContactClick = {
-        ChatSettingActivity.start(context, it.contactID, "", true)
+        activity?.startActivity(
+            Intent(activity, ChatActivity::class.java).apply {
+                putExtra("conversationID", "c2c_${it.contactID}")
+            }
+        )
     }) {
         AddMoreButton(
             menuItems = createAddContactMenuItems(

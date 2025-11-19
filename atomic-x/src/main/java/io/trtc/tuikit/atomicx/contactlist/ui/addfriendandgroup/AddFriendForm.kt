@@ -43,9 +43,9 @@ import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.contactlist.utils.displayName
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.AddContactAndGroupViewModel
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.AddContactAndGroupViewModelFactory
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
-import io.trtc.tuikit.atomicxcore.api.LoginStore
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.login.LoginStore
 
 @Composable
 fun AddFriendForm(

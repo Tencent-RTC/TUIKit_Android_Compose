@@ -55,7 +55,10 @@ android {
 
 dependencies {
 
-    implementation("io.trtc.uikit:atomicx-core:3.4.0.1307")
+    api("io.trtc.uikit:atomicx-core:3.5.0.954")
+    api("com.tencent.imsdk:imsdk-plus:latest.release")
+    api("com.tencent.liteav:LiteAVSDK_Professional:12.8.0.19279")
+    
     implementation("org.ahocorasick:ahocorasick:0.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("com.google.code.gson:gson:2.10.1")
@@ -73,7 +76,6 @@ dependencies {
     implementation(libs.tuicore)
     implementation(libs.com.tencent.mmkv)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.ui)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(platform(libs.androidx.compose.bom))
@@ -83,9 +85,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.material3)
 
-    implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)

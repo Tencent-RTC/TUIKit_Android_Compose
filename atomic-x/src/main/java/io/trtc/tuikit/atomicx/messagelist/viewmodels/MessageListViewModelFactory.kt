@@ -2,9 +2,9 @@ package io.trtc.tuikit.atomicx.messagelist.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import io.trtc.tuikit.atomicxcore.api.MessageActionStore
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
-import io.trtc.tuikit.atomicxcore.api.MessageListStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageActionStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageListStore
 
 class MessageListViewModelFactory(
     val messageListStore: MessageListStore,

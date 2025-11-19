@@ -1,4 +1,4 @@
-package io.trtc.tuikit.atomicx.audiorecorder.audiorecordercore
+package io.trtc.tuikit.atomicx.audiorecorder.audiorecorderimpl
 
 import android.Manifest
 import android.os.Looper
@@ -6,15 +6,26 @@ import android.util.Log
 import com.tencent.qcloud.tuicore.permission.PermissionCallback
 import com.tencent.qcloud.tuicore.permission.PermissionRequester
 import io.trtc.tuikit.atomicx.audiorecorder.AudioRecorderListener
+import io.trtc.tuikit.atomicx.audiorecorder.ResultCode
+import io.trtc.tuikit.atomicx.audiorecorder.audiorecordercore.AudioRecorderInternalInterface
+import io.trtc.tuikit.atomicx.audiorecorder.audiorecordercore.AudioRecorderSystem
+import io.trtc.tuikit.atomicx.audiorecorder.audiorecordercore.AudioRecorderTXUGC
 import io.trtc.tuikit.atomicx.basecomponent.utils.ContextProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+interface RecorderListener {
+    fun onRecordTime(time: Int)
+    fun onAmplitudeChanged(db: Int)
+    fun onCompleted(resultCode: ResultCode, path: String?)
+}
 
 class AudioRecorderImpl() {
     companion object {
@@ -23,13 +34,15 @@ class AudioRecorderImpl() {
 
     private var recorder: AudioRecorderInternalInterface? = null
     private val mainCoroutineScope = CoroutineScope(Dispatchers.Main)
-    internal val _currentPower = MutableStateFlow(0)
-    internal val _recordTimeSecond = MutableStateFlow(0)
+    private val _currentPower = MutableStateFlow(0)
+    private val _recordTimeMs = MutableStateFlow(0)
+    internal val currentPowerFlow = _currentPower.asStateFlow()
+    internal val recordTimeMsFlow = _recordTimeMs.asStateFlow()
     private var isRecording = false
     private var isCancelRecord = false
     private var audioFilePath: String? = null
 
-    private var enableAIDeNoise: Boolean = false;
+    private var enableAIDeNoise: Boolean = false
     private var listener: AudioRecorderListener? = null
 
     init {
@@ -44,20 +57,26 @@ class AudioRecorderImpl() {
         recorder?.setListener(RecorderListenerImpl())
     }
 
-    internal fun setCurrentPower(value: Int) {
+    private fun setCurrentPower(value: Int) {
         _currentPower.value = value
     }
 
-    internal fun setCurrentTime(value: Int) {
-        _recordTimeSecond.value = value
+    private fun setCurrentTime(value: Int) {
+        _recordTimeMs.value = value
     }
 
-    fun startRecord(filepath: String?, enableAIDeNoise: Boolean, listener: AudioRecorderListener) {
+    fun startRecord(
+        filepath: String?,
+        enableAIDeNoise: Boolean,
+        minRecordDurationMs: Int,
+        maxRecordDurationMs: Int,
+        listener: AudioRecorderListener
+    ) {
         this.listener = listener
         Log.i(TAG, "start record filepath:$filepath")
         PermissionRequester.newInstance(Manifest.permission.RECORD_AUDIO).callback(object : PermissionCallback() {
             override fun onGranted() {
-                runOnMainThread { startRecordInternal(filepath, enableAIDeNoise) }
+                runOnMainThread { startRecordInternal(filepath, enableAIDeNoise, minRecordDurationMs, maxRecordDurationMs) }
             }
 
             override fun onDenied() {
@@ -67,7 +86,12 @@ class AudioRecorderImpl() {
         }).request()
     }
 
-    private fun startRecordInternal(filepath: String?, enableAIDeNoise: Boolean) {
+    private fun startRecordInternal(
+        filepath: String?,
+        enableAIDeNoise: Boolean,
+        minRecordDurationMs: Int,
+        maxRecordDurationMs: Int
+    ) {
         if (isRecording) {
             onRecordingComplete(ResultCode.ERROR_RECORDING, "", 0)
             return
@@ -85,15 +109,8 @@ class AudioRecorderImpl() {
             return
         }
 
-        if (enableAIDeNoise) {
-            (recorder as? AudioRecorderTXUGC) ?: run {
-                onRecordingComplete(ResultCode.ERROR_USE_AI_DENOISE_NO_LITEAV_SDK, "", 0)
-                return
-            }
-            recorder?.enableAIDeNoise(enableAIDeNoise)
-        }
-
-        recorder?.startRecord(filePath = audioFilePath)
+        recorder?.enableAIDeNoise(enableAIDeNoise)
+        recorder?.startRecord(filePath = audioFilePath, minRecordDurationMs, maxRecordDurationMs)
     }
 
     fun stopRecord() {
@@ -151,13 +168,13 @@ class AudioRecorderImpl() {
     }
 
     inner class RecorderListenerImpl : RecorderListener {
-        private var recordTimeSecond: Int = 0
+        private var recordTimeMs: Int = 0
 
         override fun onRecordTime(time: Int) {
             Log.i(TAG, "onRecordProcess time:$time")
             this@AudioRecorderImpl.runOnMainThread {
-                recordTimeSecond = time / 1000
-                this@AudioRecorderImpl.setCurrentTime(recordTimeSecond)
+                recordTimeMs = time
+                this@AudioRecorderImpl.setCurrentTime(recordTimeMs)
             }
         }
 
@@ -175,7 +192,7 @@ class AudioRecorderImpl() {
             this@AudioRecorderImpl.runOnMainThread {
                 isRecording = false
                 if (!isCancelRecord) {
-                    this@AudioRecorderImpl.onRecordingComplete(resultCode, path, recordTimeSecond)
+                    this@AudioRecorderImpl.onRecordingComplete(resultCode, path, recordTimeMs)
                 }
             }
         }

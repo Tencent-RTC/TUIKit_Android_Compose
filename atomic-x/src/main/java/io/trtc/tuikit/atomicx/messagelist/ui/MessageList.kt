@@ -57,6 +57,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -65,28 +66,37 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AlertDialog
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Avatar
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AvatarSize
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
-import io.trtc.tuikit.atomicx.basecomponent.config.AppBuilderConfig
 import io.trtc.tuikit.atomicx.basecomponent.config.MessageAlignment
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
+import io.trtc.tuikit.atomicx.messagelist.config.ChatMessageListConfig
+import io.trtc.tuikit.atomicx.messagelist.config.MessageListConfigProtocol
+import io.trtc.tuikit.atomicx.messagelist.model.MessageCustomAction
+import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.DefaultMessageRenderer
 import io.trtc.tuikit.atomicx.messagelist.viewmodels.HighlightManager
 import io.trtc.tuikit.atomicx.messagelist.viewmodels.MessageListViewModel
 import io.trtc.tuikit.atomicx.messagelist.viewmodels.MessageListViewModelFactory
-import io.trtc.tuikit.atomicxcore.api.MessageActionStore
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
-import io.trtc.tuikit.atomicxcore.api.MessageListChangeReason
-import io.trtc.tuikit.atomicxcore.api.MessageListStore
-import io.trtc.tuikit.atomicxcore.api.MessageListType
-import io.trtc.tuikit.atomicxcore.api.MessageStatus
+import io.trtc.tuikit.atomicx.messagelist.viewmodels.MessageUIAction
+import io.trtc.tuikit.atomicxcore.api.message.MessageActionStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageListChangeReason
+import io.trtc.tuikit.atomicxcore.api.message.MessageListStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageListType
+import io.trtc.tuikit.atomicxcore.api.message.MessageStatus
+import io.trtc.tuikit.atomicxcore.api.message.MessageType
 import kotlin.math.ceil
 
 val LocalMessageListViewModel =
     compositionLocalOf<MessageListViewModel> { error("No ViewModel provided") }
 val LocalMessage = compositionLocalOf<MessageInfo> { error("No Message provided") }
+val LocalMessageListConfig = compositionLocalOf<MessageListConfigProtocol> { error("No MessageListConfig provided") }
+val LocalCustomActions = compositionLocalOf<List<MessageCustomAction>> { error("No MessageCustomAction provided") }
 
 @Composable
 fun MessageList(
     conversationID: String,
     modifier: Modifier = Modifier,
+    config: MessageListConfigProtocol = ChatMessageListConfig(),
+    customActions: List<MessageCustomAction> = emptyList(),
     locateMessage: MessageInfo? = null,
     messageListViewModelFactory: MessageListViewModelFactory = MessageListViewModelFactory(
         MessageListStore.create(conversationID, MessageListType.HISTORY),
@@ -108,6 +118,8 @@ fun MessageList(
 
     CompositionLocalProvider(
         LocalMessageListViewModel provides messageListViewModel,
+        LocalMessageListConfig provides config,
+        LocalCustomActions provides customActions
     ) {
         MessageList(modifier, messageListViewModel, onUserClick)
     }
@@ -122,6 +134,7 @@ private fun MessageList(
 ) {
     val colors = LocalTheme.current.colors
     val density = LocalDensity.current
+    val config = LocalMessageListConfig.current
     val configuration = LocalConfiguration.current
     val messageList by messageListViewModel.messageList.collectAsState()
     val isListInitialized = messageList.isNotEmpty()
@@ -191,7 +204,7 @@ private fun MessageList(
         Column(
             modifier = modifier
                 .background(color = colors.bgColorOperate)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = config.horizontalPadding)
         ) {
             LaunchedEffect(listState) {
 
@@ -291,6 +304,7 @@ fun MessageItem(
     onUserClick: (String?) -> Unit
 ) {
     val colors = LocalTheme.current.colors
+    val config = LocalMessageListConfig.current
     val messageViewModel = LocalMessageListViewModel.current
     val prevMessageIsAggregation = messageViewModel.checkPreviousMessageIsAggregation(index)
     val nextMessageIsAggregation = messageViewModel.checkNextMessageIsAggregation(index)
@@ -298,16 +312,50 @@ fun MessageItem(
 //    val prevMessageIsAggregation = false
 //    val nextMessageIsAggregation = false
 
-    val topPadding = if (prevMessageIsAggregation) 2.dp else 10.dp
-    val bottomPadding = if (nextMessageIsAggregation) 2.dp else 10.dp
-    val isShowSelfAvatar = false
+    val isSelf = message.isSelf
+    val isShowSelfAvatar = config.isShowRightAvatar
+    val isShowSelfNickname = config.isShowRightNickname
+    val isShowOtherAvatar = config.isShowLeftAvatar
+    val isShowOtherNickname = config.isShowLeftNickname
+    val isShowTimeMessage = config.isShowTimeMessage
+    val isShowTimeInBubble = config.isShowTimeInBubble
+    val isShowSystemMessage = config.isShowSystemMessage
+    val isShowUnsupportMessage = config.isShowUnsupportMessage
+    val cellSpacing = config.cellSpacing
+    val avatarSpacing = config.avatarSpacing
+    val isShowUserInfo = when {
+        isSelf -> isShowSelfAvatar || isShowSelfNickname
+        else -> isShowOtherAvatar || isShowOtherNickname
+    }
+    val isShowAvatar = when {
+        isSelf -> isShowSelfAvatar
+        else -> isShowOtherAvatar
+    }
+    val isShowNickname = when {
+        isSelf -> isShowSelfNickname
+        else -> isShowOtherNickname
+    }
 
+    val topPadding = if (prevMessageIsAggregation) 2.dp else cellSpacing
+    val bottomPadding = if (nextMessageIsAggregation) 2.dp else cellSpacing
     CompositionLocalProvider(LocalMessage provides message) {
 
         val renderer = MessageRendererRegistry.getRenderer(message)
+        if (!isShowSystemMessage) {
+            if (message.messageType == MessageType.SYSTEM) {
+                Box {}
+                return@CompositionLocalProvider
+            }
+        }
+        if (!isShowUnsupportMessage) {
+            if (renderer is DefaultMessageRenderer) {
+                Box {}
+                return@CompositionLocalProvider
+            }
+        }
         if (renderer.showMessageMeta()) {
 
-            val arrangement = when (AppBuilderConfig.messageAlignment) {
+            val arrangement = when (config.alignment) {
                 MessageAlignment.LEFT -> Arrangement.Start
                 MessageAlignment.RIGHT -> Arrangement.End
                 else -> if (message.isSelf) Arrangement.End else Arrangement.Start
@@ -318,7 +366,7 @@ fun MessageItem(
                     .fillMaxWidth()
                     .padding(top = topPadding, bottom = bottomPadding)
             ) {
-                if (!timeString.isNullOrEmpty()) {
+                if (!timeString.isNullOrEmpty() && isShowTimeMessage) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -342,45 +390,49 @@ fun MessageItem(
                     horizontalArrangement = arrangement,
                     verticalAlignment = Alignment.Bottom,
                 ) {
-                    when (AppBuilderConfig.messageAlignment) {
+                    val statusContent = @Composable {
+                        MessageStatusContent(modifier = Modifier.align(Alignment.CenterVertically))
+                    }
+                    val messageContent = @Composable {
+                        MessageContent(nextMessageIsAggregation)
+                    }
+                    val userInfo = @Composable {
+                        UserInfoColumn(
+                            isShowAvatar = isShowAvatar,
+                            isShowNickname = isShowNickname,
+                            nextMessageIsAggregation = nextMessageIsAggregation,
+                            isStart = when (config.alignment) {
+                                MessageAlignment.LEFT -> true
+                                MessageAlignment.RIGHT -> false
+                                else -> !message.isSelf
+                            }
+                        ) { onUserClick(message.sender) }
+                    }
+                    val spacer = @Composable { Spacer(Modifier.width(avatarSpacing)) }
+
+                    val components = when (config.alignment) {
                         MessageAlignment.TWO_SIDED -> {
-                            if (message.isSelf) {
-                                MessageStatusContent(modifier = Modifier.align(Alignment.CenterVertically))
-                                MessageContent(nextMessageIsAggregation)
-                                if (isShowSelfAvatar) {
-                                    Spacer(Modifier.width(8.dp))
-                                    Avatar(nextMessageIsAggregation) {
-                                        onUserClick(message.sender)
-                                    }
-                                }
+                            if (isSelf) {
+                                listOf(statusContent, messageContent) +
+                                        (if (isShowUserInfo) listOf(spacer, userInfo) else emptyList())
                             } else {
-                                Avatar(nextMessageIsAggregation) {
-                                    onUserClick(message.sender)
-                                }
-                                Spacer(Modifier.width(8.dp))
-                                MessageContent(nextMessageIsAggregation)
-                                MessageStatusContent(modifier = Modifier.align(Alignment.CenterVertically))
+                                (if (isShowUserInfo) listOf(userInfo, spacer) else emptyList()) +
+                                        listOf(messageContent, statusContent)
                             }
                         }
 
                         MessageAlignment.RIGHT -> {
-                            MessageStatusContent(modifier = Modifier.align(Alignment.CenterVertically))
-                            MessageContent(nextMessageIsAggregation)
-                            Spacer(Modifier.width(8.dp))
-                            Avatar(nextMessageIsAggregation) {
-                                onUserClick(message.sender)
-                            }
+                            listOf(statusContent, messageContent) +
+                                    (if (isShowUserInfo) listOf(spacer, userInfo) else emptyList())
                         }
 
                         MessageAlignment.LEFT -> {
-                            Avatar(nextMessageIsAggregation) {
-                                onUserClick(message.sender!!)
-                            }
-                            Spacer(Modifier.width(8.dp))
-                            MessageContent(nextMessageIsAggregation)
-                            MessageStatusContent(modifier = Modifier.align(Alignment.CenterVertically))
+                            (if (isShowUserInfo) listOf(userInfo, spacer) else emptyList()) +
+                                    listOf(messageContent, statusContent)
                         }
                     }
+
+                    components.forEach { it() }
                 }
             }
         } else {
@@ -390,6 +442,40 @@ fun MessageItem(
                     .padding(vertical = 10.dp)
             ) {
                 renderer.Render(message)
+            }
+        }
+    }
+}
+
+@Composable
+private fun UserInfoColumn(
+    isShowAvatar: Boolean,
+    isShowNickname: Boolean,
+    nextMessageIsAggregation: Boolean,
+    isStart: Boolean,
+    onUserClick: () -> Unit,
+) {
+    val colors = LocalTheme.current.colors
+    val message = LocalMessage.current
+    Column(
+        modifier = Modifier.clickable(indication = null, interactionSource = null) {
+            onUserClick()
+        },
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = if (isStart) Alignment.Start else Alignment.End
+    ) {
+        if (isShowNickname && !nextMessageIsAggregation) {
+            Text(
+                text = message.senderDisplayName,
+                fontSize = 12.sp,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+                color = colors.textColorSecondary
+            )
+        }
+        if (isShowAvatar) {
+            Avatar(nextMessageIsAggregation) {
+                onUserClick()
             }
         }
     }
@@ -414,6 +500,8 @@ fun Avatar(isAggregation: Boolean = false, onClick: () -> Unit) {
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun MessageContent(isAggregation: Boolean = false, enableGesture: Boolean = true) {
+    val config = LocalMessageListConfig.current
+    val customActions = LocalCustomActions.current
     val message = LocalMessage.current
     val colors = LocalTheme.current.colors
     val viewModel = LocalMessageListViewModel.current
@@ -424,7 +512,7 @@ fun MessageContent(isAggregation: Boolean = false, enableGesture: Boolean = true
     val bottomStartRadius = if (isAggregation) {
         normalRadius
     } else {
-        when (AppBuilderConfig.messageAlignment) {
+        when (config.alignment) {
             MessageAlignment.LEFT -> smallRadius
             MessageAlignment.RIGHT -> normalRadius
             else -> if (message.isSelf) normalRadius else smallRadius
@@ -434,7 +522,7 @@ fun MessageContent(isAggregation: Boolean = false, enableGesture: Boolean = true
     val bottomEndRadius = if (isAggregation) {
         normalRadius
     } else {
-        when (AppBuilderConfig.messageAlignment) {
+        when (config.alignment) {
             MessageAlignment.LEFT -> normalRadius
             MessageAlignment.RIGHT -> smallRadius
             else -> if (message.isSelf) smallRadius else normalRadius
@@ -482,8 +570,8 @@ fun MessageContent(isAggregation: Boolean = false, enableGesture: Boolean = true
     }
 
     if (showActionDialog) {
-        val actionItems = viewModel.getActions(message)
-        if (actionItems.isEmpty()) {
+        val actionItems = viewModel.getActions(message, config)
+        if (actionItems.isEmpty() && customActions.isEmpty()) {
             showActionDialog = false
         } else {
             ActionDialogBackground()
@@ -497,12 +585,12 @@ fun MessageContent(isAggregation: Boolean = false, enableGesture: Boolean = true
                             indication = null
                         ) { showActionDialog = false }, contentAlignment = Alignment.Center
                 ) {
-                    val horizontalPadding = when (AppBuilderConfig.messageAlignment) {
+                    val horizontalPadding = when (config.alignment) {
                         MessageAlignment.LEFT -> 64.dp
                         MessageAlignment.RIGHT -> 64.dp
                         else -> if (message.isSelf) 16.dp else 64.dp
                     }
-                    val alignment = when (AppBuilderConfig.messageAlignment) {
+                    val alignment = when (config.alignment) {
                         MessageAlignment.LEFT -> Alignment.Start
                         MessageAlignment.RIGHT -> Alignment.End
                         else -> if (message.isSelf) Alignment.End else Alignment.Start
@@ -549,10 +637,18 @@ private fun ActionDialogBackground() {
 @Composable
 fun MessageActions(onActionClick: () -> Unit) {
     val message = LocalMessage.current
+    val config = LocalMessageListConfig.current
+    val customActions = LocalCustomActions.current
     val viewModel = LocalMessageListViewModel.current
     val context = LocalContext.current
     var currentPage by remember { mutableStateOf(0) }
-    val allItems = viewModel.getActions(message)
+    val allItems = viewModel.getActions(message, config) + customActions.map {
+        MessageUIAction(
+            name = it.title,
+            icon = it.iconResID,
+            action = it.action
+        )
+    }
     val pageSize = 4
 
     val colors = LocalTheme.current.colors

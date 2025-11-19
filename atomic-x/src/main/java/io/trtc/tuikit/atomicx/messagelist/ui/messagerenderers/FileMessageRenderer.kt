@@ -29,7 +29,7 @@ import io.trtc.tuikit.atomicx.messagelist.ui.LocalMessageInteraction
 import io.trtc.tuikit.atomicx.messagelist.ui.LocalMessageListViewModel
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageRenderer
 import io.trtc.tuikit.atomicx.messagelist.utils.FileUtils
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 
 class FileMessageRenderer : MessageRenderer<MessageInfo> {
     @Composable

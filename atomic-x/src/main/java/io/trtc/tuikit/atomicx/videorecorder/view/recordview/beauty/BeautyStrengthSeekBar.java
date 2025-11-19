@@ -10,7 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
 import io.trtc.tuikit.atomicx.R;
-import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfig;
+import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfigInternal;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderResourceUtils;
 
 public class BeautyStrengthSeekBar extends androidx.appcompat.widget.AppCompatSeekBar {
@@ -53,7 +53,7 @@ public class BeautyStrengthSeekBar extends androidx.appcompat.widget.AppCompatSe
     private void init() {
         mSlideInnerRingDrawable = VideoRecorderResourceUtils
                 .getDrawable(mContext, R.drawable.video_recorder_rebuild_seekbar_progress_thumb,
-                        VideoRecorderConfig.getInstance().getThemeColor());
+                        VideoRecorderConfigInternal.getInstance().getThemeColor());
 
         mSlideDrawable = VideoRecorderResourceUtils.getDrawable(R.drawable.video_recorder_rebuild_seekbar_progress_thumb);
         mIndicatorDrawable = VideoRecorderResourceUtils.getDrawable(R.drawable.video_recorder_beauty_filter_strength_seek_indicator);
@@ -106,7 +106,7 @@ public class BeautyStrengthSeekBar extends androidx.appcompat.widget.AppCompatSe
     private void drawProcessLine(Canvas canvas, int centerX) {
         int halfSlideWidth = mSlideSize / 2;
         int lineTop = mIndicatorHeight + mSlideSpacing + mSlideSize / 2;
-        mPaint.setColor(VideoRecorderConfig.getInstance().getThemeColor());
+        mPaint.setColor(VideoRecorderConfigInternal.getInstance().getThemeColor());
         canvas.drawLine(halfSlideWidth, lineTop, centerX, lineTop, mPaint);
         mPaint.setColor(Color.WHITE);
         canvas.drawLine(centerX, lineTop, getWidth() - halfSlideWidth, lineTop, mPaint);

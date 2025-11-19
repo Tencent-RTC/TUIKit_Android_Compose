@@ -12,8 +12,8 @@ import io.trtc.tuikit.atomicx.R;
 
 import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecorderRecordCore;
 import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecordCoreConstant;
-import io.trtc.tuikit.atomicx.videorecorder.view.AuthorizationPrompter;
-import io.trtc.tuikit.atomicx.videorecorder.view.AuthorizationPrompter.PrompterType;
+import io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderAuthorizationPrompter;
+import io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderAuthorizationPrompter.PrompterType;
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.RecordInfo;
 
 @SuppressLint("ViewConstructor")
@@ -56,7 +56,7 @@ public class RecordAspectView extends RelativeLayout {
         selectAnotherAspect(mRecordInfo.aspectRatio.get());
         root.setOnClickListener(view -> {
             if (!mRecordCore.isUGCRecorderCore()) {
-                AuthorizationPrompter.showPermissionPrompterDialog(mContext, PrompterType.NO_LITEAV_SDK);
+                VideoRecorderAuthorizationPrompter.showPermissionPrompterDialog(mContext, PrompterType.NO_LITEAV_SDK);
                 return;
             }
             selectAnotherAspect(mFirstAspect);

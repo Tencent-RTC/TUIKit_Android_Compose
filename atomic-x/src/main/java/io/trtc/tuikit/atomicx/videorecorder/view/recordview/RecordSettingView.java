@@ -13,9 +13,13 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+
 import io.trtc.tuikit.atomicx.R;
-import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfig;
+import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfigInternal;
+import io.trtc.tuikit.atomicx.videorecorder.core.UGCReflectVideoRecorderCore;
 import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecorderRecordCore;
+import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecorderSignatureChecker;
+import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecorderSignatureChecker.ResultCode;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderData.VideoRecorderDataObserver;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderResourceUtils;
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.BeautyFilterScrollView;
@@ -24,6 +28,10 @@ import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.BeautyIn
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.RecordInfo;
 
 public class RecordSettingView extends RelativeLayout {
+
+    private static boolean isAppDebuggable(Context context) {
+        return (context.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    }
 
     private static final int SCROLL_FILTER_RIGHT_LEFT_MARGIN_SP = 15;
     private static final int SETTING_ITEM_VIEW_BOTTOM_MARGIN_SP = 24;
@@ -45,10 +53,10 @@ public class RecordSettingView extends RelativeLayout {
             return;
         }
 
-        Log.i(TAG,"is front camera:" + mRecordInfo.isFontCamera.get()
+        Log.i(TAG,"is front camera:" + mRecordInfo.isFrontCamera.get()
                 + " is flash on: " + mRecordInfo.isFlashOn.get());
 
-        if (mRecordInfo.isFontCamera.get()) {
+        if (mRecordInfo.isFrontCamera.get()) {
             mSettingItemTorch.setIconRes(R.drawable.video_recorder_torch_close_disable);
             mSettingItemTorch.setClickable(false);
             return;
@@ -112,7 +120,7 @@ public class RecordSettingView extends RelativeLayout {
     }
 
     private void initTorchView() {
-        if (!VideoRecorderConfig.getInstance().isSupportRecordTorch()) {
+        if (!VideoRecorderConfigInternal.getInstance().isSupportRecordTorch()) {
             return;
         }
 
@@ -124,7 +132,7 @@ public class RecordSettingView extends RelativeLayout {
     }
 
     private void initBeautyView() {
-        if (!VideoRecorderConfig.getInstance().isSupportRecordBeauty()) {
+        if (!VideoRecorderConfigInternal.getInstance().isSupportRecordBeauty() || !isSupportAdvanceFunction()) {
             return;
         }
 
@@ -152,7 +160,7 @@ public class RecordSettingView extends RelativeLayout {
     }
 
     private void initScrollBeautyFilterView() {
-        if (!VideoRecorderConfig.getInstance().isSupportRecordScrollFilter()) {
+        if (!VideoRecorderConfigInternal.getInstance().isSupportRecordScrollFilter() || !isSupportAdvanceFunction()) {
             return;
         }
 
@@ -180,7 +188,7 @@ public class RecordSettingView extends RelativeLayout {
     }
 
     private void initAspectView() {
-        if (!VideoRecorderConfig.getInstance().isSupportRecordAspect()) {
+        if (!VideoRecorderConfigInternal.getInstance().isSupportRecordAspect() || !isSupportAdvanceFunction()) {
             return;
         }
 
@@ -208,13 +216,22 @@ public class RecordSettingView extends RelativeLayout {
     }
 
     private void addObserver() {
-        mRecordInfo.isFontCamera.observe(flashStatusObserver);
+        mRecordInfo.isFrontCamera.observe(flashStatusObserver);
         mRecordInfo.isFlashOn.observe(flashStatusObserver);
     }
 
     private void removeObserver() {
-        mRecordInfo.isFontCamera.removeObserver(flashStatusObserver);
+        mRecordInfo.isFrontCamera.removeObserver(flashStatusObserver);
         mRecordInfo.isFlashOn.removeObserver(flashStatusObserver);
+    }
+
+    private boolean isSupportAdvanceFunction() {
+        if (isAppDebuggable(getContext())) {
+            return true;
+        }
+
+        return VideoRecorderSignatureChecker.getInstance().getSetSignatureResult() == ResultCode.SUCCESS
+                && UGCReflectVideoRecorderCore.isAvailable();
     }
 
     static class SettingItemViewHolder{

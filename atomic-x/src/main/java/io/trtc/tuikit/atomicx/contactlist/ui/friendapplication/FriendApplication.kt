@@ -43,8 +43,8 @@ import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.contactlist.utils.displayName
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.FriendApplicationViewModel
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.FriendApplicationViewModelFactory
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
-import io.trtc.tuikit.atomicxcore.api.FriendApplicationInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.contact.FriendApplicationInfo
 
 @Composable
 fun FriendApplication(

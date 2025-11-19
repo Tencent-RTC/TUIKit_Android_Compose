@@ -57,20 +57,25 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.ActionSheet
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Avatar
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AvatarBadge
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AvatarContent
-import io.trtc.tuikit.atomicx.basecomponent.config.AppBuilderConfig
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
+import io.trtc.tuikit.atomicx.conversationlist.config.ChatConversationActionConfig
+import io.trtc.tuikit.atomicx.conversationlist.config.ConversationActionConfigProtocol
 import io.trtc.tuikit.atomicx.conversationlist.model.ConversationActionType
+import io.trtc.tuikit.atomicx.conversationlist.model.ConversationCustomAction
+import io.trtc.tuikit.atomicx.conversationlist.viewmodels.ConversationListViewModel
 import io.trtc.tuikit.atomicx.conversationlist.viewmodels.ConversationListViewModelFactory
-import io.trtc.tuikit.atomicx.conversationlist.viewmodels.ConversationViewModel
-import io.trtc.tuikit.atomicxcore.api.ConversationInfo
-import io.trtc.tuikit.atomicxcore.api.ConversationListStore
-import io.trtc.tuikit.atomicxcore.api.ConversationReceiveOption
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationInfo
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationListStore
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationReceiveOption
 import kotlin.math.roundToInt
 
-val LocalViewModel = compositionLocalOf<ConversationViewModel> { error("No ViewModel provided") }
+val LocalViewModel = compositionLocalOf<ConversationListViewModel> { error("No ViewModel provided") }
 val LocalConversation =
     compositionLocalOf<ConversationInfo> { error("No ConversationInfo provided") }
 val LocalIsMultiSelect = compositionLocalOf { false }
+val LocalConversationConfig =
+    compositionLocalOf<ConversationActionConfigProtocol> { error("No ConversationConfig provided") }
+val LocalCustomActions = compositionLocalOf<List<ConversationCustomAction>> { emptyList() }
 
 @Composable
 fun ConversationList(
@@ -78,15 +83,17 @@ fun ConversationList(
     conversationListViewModelFactory: ConversationListViewModelFactory = ConversationListViewModelFactory(
         ConversationListStore.create()
     ),
+    config: ConversationActionConfigProtocol = ChatConversationActionConfig(),
+    customActions: List<ConversationCustomAction> = emptyList(),
     onConversationClick: (ConversationInfo) -> Unit = {},
 ) {
     val colors = LocalTheme.current.colors
     val multiSelect: Boolean = false
 
-    val conversationViewModel =
-        viewModel(ConversationViewModel::class, factory = conversationListViewModelFactory)
+    val conversationListViewModel =
+        viewModel(ConversationListViewModel::class, factory = conversationListViewModelFactory)
 
-    val conversationList = conversationViewModel.conversationList
+    val conversationList = conversationListViewModel.conversationList
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = 0)
     val currentSwipedItem = remember { mutableStateOf<String?>(null) }
 
@@ -100,7 +107,7 @@ fun ConversationList(
     }
 
     LaunchedEffect(multiSelect) {
-        conversationViewModel.clearSelection()
+        conversationListViewModel.clearSelection()
     }
 
     LaunchedEffect(listState) {
@@ -113,8 +120,10 @@ fun ConversationList(
     }
 
     CompositionLocalProvider(
-        LocalViewModel provides conversationViewModel,
-        LocalIsMultiSelect provides multiSelect
+        LocalViewModel provides conversationListViewModel,
+        LocalIsMultiSelect provides multiSelect,
+        LocalConversationConfig provides config,
+        LocalCustomActions provides customActions
     ) {
 
         Box(
@@ -130,7 +139,7 @@ fun ConversationList(
                     val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: -1
 
                     if (lastVisibleIndex >= 0 && lastVisibleIndex >= list.size - 3) {
-                        conversationViewModel.loadMoreConversation()
+                        conversationListViewModel.loadMoreConversation()
                     }
                 }
             }
@@ -153,16 +162,16 @@ fun ConversationList(
                         onClick = onConversationClick,
                         onReadClick = {
                             if (conversation.unreadCount > 0) {
-                                conversationViewModel.setConversationAction(
+                                conversationListViewModel.setConversationAction(
                                     conversation,
                                     ConversationActionType.CLEAR_UNREAD_COUNT
                                 )
-                                conversationViewModel.setConversationAction(
+                                conversationListViewModel.setConversationAction(
                                     conversation,
                                     ConversationActionType.MARK_READ
                                 )
                             } else {
-                                conversationViewModel.setConversationAction(
+                                conversationListViewModel.setConversationAction(
                                     conversation,
                                     ConversationActionType.MARK_UNREAD
                                 )
@@ -175,24 +184,39 @@ fun ConversationList(
             }
 
             if (isShowMenu) {
-                val actions =
-                    conversationViewModel.getActions(conversationInfo = currentClickItem!!)
-                if (!actions.isEmpty()) {
+                val menuActions =
+                    conversationListViewModel.getActions(conversationInfo = currentClickItem!!, config = config)
+                if (!menuActions.isEmpty() || !customActions.isEmpty()) {
+                    val actionMap = mutableMapOf<ActionItem, () -> Unit>()
+                    val options = menuActions.map { menuAction ->
+                        ActionItem(
+                            text = stringResource(menuAction.titleResID),
+                            isDestructive = menuAction.dangerous,
+                            value = menuAction.type
+                        ).also { item ->
+                            actionMap[item] = {
+                                conversationListViewModel.setConversationAction(
+                                    currentClickItem!!,
+                                    menuAction.type
+                                )
+                            }
+                        }
+                    } + customActions.map {
+                        ActionItem(
+                            text = it.title,
+                            value = it
+                        ).also { item ->
+                            actionMap[item] = {
+                                it.action(currentClickItem!!)
+                            }
+                        }
+                    }
                     ActionSheet(
                         isVisible = isShowMenu,
-                        options = actions.map {
-                            ActionItem(
-                                text = stringResource(it.titleResID),
-                                isDestructive = it.dangerous,
-                                value = it.type
-                            )
-                        },
+                        options = options,
                         onDismiss = { isShowMenu = false },
                     ) {
-                        conversationViewModel.setConversationAction(
-                            currentClickItem!!,
-                            it.value as ConversationActionType
-                        )
+                        actionMap[it]?.invoke()
                     }
                 }
             }
@@ -209,11 +233,14 @@ fun SwipeConversationItem(
     onMoreClick: (ConversationInfo) -> Unit = {},
     currentSwipedItem: MutableState<String?> = mutableStateOf(null)
 ) {
+    val customActions = LocalCustomActions.current
+    val config = LocalConversationConfig.current
     val colors = LocalTheme.current.colors
     val density = LocalDensity.current
     val itemId = conversationInfo.conversationID ?: ""
     val hasUnreadCount = conversationInfo.unreadCount > 0
-    val showActions = AppBuilderConfig.conversationActionList.isNotEmpty()
+    val showActions =
+        customActions.isNotEmpty() || config.isSupportPin || config.isSupportClearHistory || config.isSupportDelete || config.isSupportMute
 
     var offsetX by remember { mutableFloatStateOf(0f) }
     val swipeItemWidth = with(density) { 68.dp.toPx() }

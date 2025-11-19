@@ -15,35 +15,36 @@ import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.albumpicker.AlbumPicker
 import io.trtc.tuikit.atomicx.albumpicker.interfaces.AlbumPickerListener
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Toast
-import io.trtc.tuikit.atomicx.basecomponent.theme.DefaultTheme
+import io.trtc.tuikit.atomicx.basecomponent.theme.ThemeState
 import io.trtc.tuikit.atomicx.filepicker.FilePicker
 import io.trtc.tuikit.atomicx.filepicker.FilePickerListener
 import io.trtc.tuikit.atomicx.filepicker.util.FilePickerUtils
 import io.trtc.tuikit.atomicx.messageinput.data.MessageInputMenuAction
 import io.trtc.tuikit.atomicx.messageinput.utils.FileUtils
 import io.trtc.tuikit.atomicx.messageinput.utils.ImageUtil
-import io.trtc.tuikit.atomicx.videorecorder.RecordListener
 import io.trtc.tuikit.atomicx.videorecorder.RecordMode
-import io.trtc.tuikit.atomicx.videorecorder.TakePhotoConfig
-import io.trtc.tuikit.atomicx.videorecorder.TakeVideoConfig
+import io.trtc.tuikit.atomicx.videorecorder.VideoRecordListener
 import io.trtc.tuikit.atomicx.videorecorder.VideoRecorder
+import io.trtc.tuikit.atomicx.videorecorder.VideoRecorderConfig
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
-import io.trtc.tuikit.atomicxcore.api.LoginStore
-import io.trtc.tuikit.atomicxcore.api.MessageBody
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
-import io.trtc.tuikit.atomicxcore.api.MessageInputStore
-import io.trtc.tuikit.atomicxcore.api.MessageType
+import io.trtc.tuikit.atomicxcore.api.login.LoginStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageBody
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageInputStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 const val FILE_MAX_SIZE = 100 * 1024 * 1024
 const val VIDEO_MAX_SIZE = 100 * 1024 * 1024
 const val IMAGE_MAX_SIZE = 28 * 1024 * 1024
 const val GIF_IMAGE_MAX_SIZE = 10 * 1024 * 1024
-const val AUDIO_MAX_RECORD_TIME = 60
+const val AUDIO_MAX_RECORD_TIME = 60 * 1000
+const val AUDIO_MIN_RECORD_TIME = 2 * 1000
 
 class MessageInputViewModel(private val messageInputStore: MessageInputStore) : ViewModel() {
 
@@ -151,30 +152,35 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
     }
 
     fun captureImageAndSend(context: Context) {
-        val takePhotoConfig = TakePhotoConfig(
-            primaryColor = DefaultTheme.currentPrimaryColor
-        )
-        VideoRecorder.takePhoto(takePhotoConfig, object : RecordListener {
-            override fun onPhotoCaptured(filePath: String) {
-                sendImageMessage(context, filePath)
-            }
-        })
+        VideoRecorder.startRecord(
+            VideoRecorderConfig(
+                recordMode = RecordMode.PHOTO_ONLY,
+                primaryColor = ThemeState.shared.currentPrimaryColor
+            ), object : VideoRecordListener {
+                override fun onPhotoCaptured(filePath: String?) {
+                    filePath?.let {
+                        sendImageMessage(context, filePath)
+                    }
+                }
+            })
     }
 
     fun recordVideoAndSend(context: Context) {
-        val takeVideoConfig =
-            TakeVideoConfig(
+        VideoRecorder.startRecord(
+            VideoRecorderConfig(
                 recordMode = RecordMode.MIXED,
-                primaryColor = DefaultTheme.currentPrimaryColor
-            )
-        VideoRecorder
-            .takeVideo(takeVideoConfig, object : RecordListener {
-                override fun onVideoCaptured(filePath: String, duration: Int) {
-                    sendVideoMessage(context, filePath)
+                primaryColor = ThemeState.shared.currentPrimaryColor,
+            ), object : VideoRecordListener {
+                override fun onVideoCaptured(filePath: String?, durationMs: Int) {
+                    filePath?.let {
+                        sendVideoMessage(context, filePath)
+                    }
                 }
 
-                override fun onPhotoCaptured(filePath: String) {
-                    sendImageMessage(context, filePath)
+                override fun onPhotoCaptured(filePath: String?) {
+                    filePath?.let {
+                        sendImageMessage(context, filePath)
+                    }
                 }
             })
     }
@@ -277,7 +283,7 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
                         this.videoSnapshotPath = bitmapPath
                         this.videoSnapshotWidth = imgWidth
                         this.videoSnapshotHeight = imgHeight
-                        this.videoDuration = duration.toInt()
+                        this.videoDuration = (duration / 1000f).roundToInt()
                         this.videoType = "mp4"
                         this.videoPath = filePath
                     }

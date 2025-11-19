@@ -14,15 +14,15 @@ import androidx.annotation.NonNull;
 import com.tencent.imsdk.base.ThreadUtils;
 import io.trtc.tuikit.atomicx.videorecorder.RecordMode;
 import io.trtc.tuikit.atomicx.R;
-import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfig;
+import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfigInternal;
 import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecorderRecordCore;
 import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecordCoreConstant;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderData.VideoRecorderDataObserver;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderFileUtil;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderFileUtil.TUIVideoRecodeFileType;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderResourceUtils;
-import io.trtc.tuikit.atomicx.videorecorder.view.AuthorizationPrompter;
-import io.trtc.tuikit.atomicx.videorecorder.view.AuthorizationPrompter.PrompterType;
+import io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderAuthorizationPrompter;
+import io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderAuthorizationPrompter.PrompterType;
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.RecordInfo;
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.RecordInfo.RecordStatus;
 
@@ -55,7 +55,7 @@ public class RecordOperationView extends LinearLayout {
                 mLastRecordTime = null;
                 if (recordStatus == RecordStatus.STOP && !mRecordInfo.recordResult.isSuccess
                         && mRecordInfo.recordResult.code == VideoRecordCoreConstant.RECORD_RESULT_OK_LESS_THAN_MINDURATION) {
-                    if (VideoRecorderConfig.getInstance().getRecordMode() == RecordMode.MIXED
+                    if (VideoRecorderConfigInternal.getInstance().getRecordMode() == RecordMode.MIXED
                             && mRecordCore.isUGCRecorderCore()) {
                         mRecordCore.takePhoto(
                                 VideoRecorderFileUtil.generateRecodeFilePath(TUIVideoRecodeFileType.PICTURE_FILE));
@@ -112,7 +112,7 @@ public class RecordOperationView extends LinearLayout {
 
         mSwitchCameraView = findViewById(R.id.record_switch_camera);
         mSwitchCameraView.setOnClickListener(v -> {
-            boolean is_front_camera = mRecordInfo.isFontCamera.get();
+            boolean is_front_camera = mRecordInfo.isFrontCamera.get();
             mRecordCore.switchCamera(!is_front_camera);
         });
 
@@ -120,7 +120,7 @@ public class RecordOperationView extends LinearLayout {
         mRecordOperationTipsView = findViewById(R.id.record_operation_tips);
         mRecordOperationTipsView.setVisibility(isNeedShowOperationTipsView ? VISIBLE : INVISIBLE);
         mRecordButtonView = findViewById(R.id.start_record_button);
-        switch (VideoRecorderConfig.getInstance().getRecordMode()) {
+        switch (VideoRecorderConfigInternal.getInstance().getRecordMode()) {
             case MIXED:
                 initRecordButtonForMixedRecode();
                 break;
@@ -140,7 +140,7 @@ public class RecordOperationView extends LinearLayout {
                     VideoRecorderFileUtil.generateRecodeFilePath(TUIVideoRecodeFileType.VIDEO_FILE));
 
             if (result == VideoRecordCoreConstant.START_RECORD_ERR_LICENCE_VERIFICATION_FAILED) {
-                AuthorizationPrompter.showPermissionPrompterDialog(mContext,  PrompterType.NO_SIGNATURE);
+                VideoRecorderAuthorizationPrompter.showPermissionPrompterDialog(mContext,  PrompterType.NO_SIGNATURE);
             }
             return false;
         });
@@ -159,7 +159,7 @@ public class RecordOperationView extends LinearLayout {
                             VideoRecorderFileUtil.generateRecodeFilePath(TUIVideoRecodeFileType.PICTURE_FILE));
 
                     if (result == VideoRecordCoreConstant.START_RECORD_ERR_LICENCE_VERIFICATION_FAILED) {
-                        AuthorizationPrompter.showPermissionPrompterDialog(mContext, PrompterType.NO_SIGNATURE);
+                        VideoRecorderAuthorizationPrompter.showPermissionPrompterDialog(mContext, PrompterType.NO_SIGNATURE);
                     }
                 });
         mRecordOperationTipsView.setText(R.string.video_recorder_mixed_mode_operation_tips);
@@ -174,7 +174,7 @@ public class RecordOperationView extends LinearLayout {
                     VideoRecorderFileUtil.generateRecodeFilePath(TUIVideoRecodeFileType.VIDEO_FILE));
 
             if (result == VideoRecordCoreConstant.START_RECORD_ERR_LICENCE_VERIFICATION_FAILED) {
-                AuthorizationPrompter.showPermissionPrompterDialog(mContext, PrompterType.NO_SIGNATURE);
+                VideoRecorderAuthorizationPrompter.showPermissionPrompterDialog(mContext, PrompterType.NO_SIGNATURE);
             }
             return false;
         });
@@ -206,7 +206,7 @@ public class RecordOperationView extends LinearLayout {
                             VideoRecorderFileUtil.generateRecodeFilePath(TUIVideoRecodeFileType.PICTURE_FILE));
 
                     if (result == VideoRecordCoreConstant.START_RECORD_ERR_LICENCE_VERIFICATION_FAILED) {
-                        AuthorizationPrompter.showPermissionPrompterDialog(mContext, PrompterType.NO_SIGNATURE);
+                        VideoRecorderAuthorizationPrompter.showPermissionPrompterDialog(mContext, PrompterType.NO_SIGNATURE);
                     }
                 });
 

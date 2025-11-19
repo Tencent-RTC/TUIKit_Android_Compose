@@ -39,8 +39,8 @@ import io.trtc.tuikit.atomicx.basecomponent.utils.SetActivitySystemBarAppearance
 import io.trtc.tuikit.atomicx.chatsetting.ui.C2CChatSetting
 import io.trtc.tuikit.atomicx.chatsetting.ui.GroupChatSetting
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
 import io.trtc.tuikit.chat.BaseActivity
 import io.trtc.tuikit.chat.Event
 import io.trtc.tuikit.chat.EventBus

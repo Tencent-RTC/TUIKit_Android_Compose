@@ -44,7 +44,7 @@ import io.trtc.tuikit.atomicx.contactlist.utils.isInviteRequest
 import io.trtc.tuikit.atomicx.contactlist.utils.isJoinRequest
 import io.trtc.tuikit.atomicx.contactlist.utils.statusText
 import io.trtc.tuikit.atomicx.contactlist.utils.toUserDisplayName
-import io.trtc.tuikit.atomicxcore.api.GroupApplicationInfo
+import io.trtc.tuikit.atomicxcore.api.contact.GroupApplicationInfo
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

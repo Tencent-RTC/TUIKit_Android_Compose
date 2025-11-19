@@ -16,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import io.trtc.tuikit.atomicx.R;
 import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConstants;
-import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfig;
+import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfigInternal;
 import io.trtc.tuikit.atomicx.videorecorder.core.VideoPreviewCore;
 import io.trtc.tuikit.atomicx.videorecorder.view.preview.PreviewCommonCtrlView.CommonMediaEditListener;
 import io.trtc.tuikit.atomicx.videorecorder.view.preview.PreviewCommonCtrlView.EditType;
@@ -135,7 +135,7 @@ public class VideoPreviewFragment extends Fragment {
         mAspectRatio = bundle.getFloat(VideoRecorderConstants.PARAM_NAME_EDIT_FILE_RATIO, 9.0f / 16.0f);
         mIsRecordFile = bundle.getBoolean(VideoRecorderConstants.PARAM_NAME_IS_RECODE_FILE, false);
         Log.i(TAG, "init external parameters mEditFilePath = " + mEditFilePath
-                + " video quality = " + VideoRecorderConfig.getInstance().getVideoQuality()
+                + " video quality = " + VideoRecorderConfigInternal.getInstance().getVideoQuality()
                 + ", video ratio = " + mAspectRatio);
     }
 }

@@ -18,11 +18,9 @@ import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.audioplayer.AudioPlayer
 import io.trtc.tuikit.atomicx.audioplayer.AudioPlayerListener
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Toast
-import io.trtc.tuikit.atomicx.basecomponent.config.AppBuilderConfig
-import io.trtc.tuikit.atomicx.basecomponent.config.MessageAction
 import io.trtc.tuikit.atomicx.imageviewer.ImageElement
 import io.trtc.tuikit.atomicx.imageviewer.ImageViewer
-import io.trtc.tuikit.atomicx.messagelist.config.MessageListConfig
+import io.trtc.tuikit.atomicx.messagelist.config.MessageListConfigProtocol
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageRendererRegistry
 import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.CreateGroupMessageRenderer
 import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.FaceMessageRenderer
@@ -37,17 +35,17 @@ import io.trtc.tuikit.atomicx.messagelist.utils.collectAsState
 import io.trtc.tuikit.atomicx.videoplayer.VideoData
 import io.trtc.tuikit.atomicx.videoplayer.VideoPlayer
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
-import io.trtc.tuikit.atomicxcore.api.ConversationListStore
-import io.trtc.tuikit.atomicxcore.api.MessageActionStore
-import io.trtc.tuikit.atomicxcore.api.MessageFetchDirection
-import io.trtc.tuikit.atomicxcore.api.MessageFetchOption
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
-import io.trtc.tuikit.atomicxcore.api.MessageInputStore
-import io.trtc.tuikit.atomicxcore.api.MessageListChangeReason
-import io.trtc.tuikit.atomicxcore.api.MessageListStore
-import io.trtc.tuikit.atomicxcore.api.MessageMediaFileType
-import io.trtc.tuikit.atomicxcore.api.MessageStatus
-import io.trtc.tuikit.atomicxcore.api.MessageType
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationListStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageActionStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageFetchDirection
+import io.trtc.tuikit.atomicxcore.api.message.MessageFetchOption
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageInputStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageListChangeReason
+import io.trtc.tuikit.atomicxcore.api.message.MessageListStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageMediaFileType
+import io.trtc.tuikit.atomicxcore.api.message.MessageStatus
+import io.trtc.tuikit.atomicxcore.api.message.MessageType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
@@ -79,6 +77,8 @@ data class LoadingState(
     val isLoadingOlder: Boolean = false,
     val isLoadingNewer: Boolean = false
 )
+
+var messageAggregationTime: Int = 300
 
 class MessageListViewModel(
     private val messageListStore: MessageListStore,
@@ -229,13 +229,10 @@ class MessageListViewModel(
     }
 
     @Composable
-    fun getActions(messageInfo: MessageInfo): List<MessageUIAction> {
+    fun getActions(messageInfo: MessageInfo, config: MessageListConfigProtocol): List<MessageUIAction> {
         val context = LocalContext.current
         val actions = mutableListOf<MessageUIAction>()
-        if (messageInfo.messageType == MessageType.TEXT && AppBuilderConfig.messageActionList.contains(
-                MessageAction.COPY
-            )
-        ) {
+        if (messageInfo.messageType == MessageType.TEXT && config.isSupportCopy) {
             actions.add(
                 MessageUIAction(
                     name = context.getString(R.string.message_list_menu_copy),
@@ -257,43 +254,25 @@ class MessageListViewModel(
             val messageTime = messageInfo.timestamp ?: 0L
             val timeDifferenceSeconds = (currentTime - messageTime * 1000) / 1000
 
-            if (timeDifferenceSeconds <= 120 && AppBuilderConfig.messageActionList.contains(
-                    MessageAction.RECALL
-                )
-            ) {
+            if (timeDifferenceSeconds <= 120 && config.isSupportRecall) {
                 actions.add(
                     MessageUIAction(
                         name = context.getString(R.string.message_list_menu_recall),
                         icon = R.drawable.message_list_menu_recall_icon,
                         action = { messageInfo ->
-                            messageActionStore.recallMessage(
-                                messageInfo,
-                                object :
-                                    CompletionHandler {
-                                    override fun onSuccess() {
-                                    }
-
-                                    override fun onFailure(code: Int, desc: String) {
-                                    }
-                                })
+                            messageActionStore.recallMessage(messageInfo)
                         })
                 )
             }
         }
-        if (AppBuilderConfig.messageActionList.contains(MessageAction.DELETE)) {
+        if (config.isSupportDelete) {
             actions.add(
                 MessageUIAction(
                     name = context.getString(R.string.message_list_menu_delete),
                     dangerousAction = true,
                     icon = R.drawable.message_list_menu_delete_icon,
                     action = { messageInfo ->
-                        messageActionStore.deleteMessage(messageInfo, object : CompletionHandler {
-                            override fun onSuccess() {
-                            }
-
-                            override fun onFailure(code: Int, desc: String) {
-                            }
-                        })
+                        messageActionStore.deleteMessage(messageInfo)
                     })
             )
         }
@@ -404,7 +383,7 @@ class MessageListViewModel(
         val nextMessage = messageList.value.getOrNull(index - 1)
         if (message?.sender == nextMessage?.sender) {
             val timeInterval = getIntervalSeconds(message?.timestamp, nextMessage?.timestamp)
-            if (timeInterval > MessageListConfig.messageAggregationTime) {
+            if (timeInterval > messageAggregationTime) {
                 return false
             }
             if (nextMessage?.status == MessageStatus.RECALLED) {
@@ -420,7 +399,7 @@ class MessageListViewModel(
         val prevMessage = messageList.value.getOrNull(index + 1)
         if (message?.sender == prevMessage?.sender) {
             val timeInterval = getIntervalSeconds(message?.timestamp, prevMessage?.timestamp)
-            if (timeInterval > MessageListConfig.messageAggregationTime) {
+            if (timeInterval > messageAggregationTime) {
                 return false
             }
             if (prevMessage?.status == MessageStatus.RECALLED) {
@@ -439,7 +418,7 @@ class MessageListViewModel(
         val prevMessage = messageList.value.getOrNull(index + 1)
         if (message != null && prevMessage != null) {
             val timeInterval = getIntervalSeconds(message.timestamp, prevMessage.timestamp)
-            if (timeInterval > MessageListConfig.messageAggregationTime) {
+            if (timeInterval > messageAggregationTime) {
                 return getTimeString(message.timestamp?.times(1000))
             }
         }

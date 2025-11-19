@@ -3,6 +3,11 @@ package io.trtc.tuikit.atomicx.audiorecorder.audiorecordercore;
 import android.content.Context;
 import android.util.Log;
 
+import android.widget.Toast;
+
+import io.trtc.tuikit.atomicx.R;
+import io.trtc.tuikit.atomicx.audiorecorder.ResultCode;
+import io.trtc.tuikit.atomicx.audiorecorder.audiorecorderimpl.RecorderListener;
 import org.jetbrains.annotations.Nullable;
 
 import io.trtc.tuikit.atomicx.audiorecorder.audiorecordercore.TXUGCAudioRecorderReflector.AudioConfig;
@@ -12,6 +17,7 @@ import io.trtc.tuikit.atomicx.audiorecorder.audiorecordercore.TXUGCAudioRecorder
 public class AudioRecorderTXUGC implements AudioRecorderInternalInterface, TXUGCAudioRecorderReflectorListener {
     private final static String TAG = "TXUGCAudioRecorder";
     private final static int ERROR_LESS_THAN_MIN_DURATION = 1;
+    private final static int SUCCESS_EXCEED_MAX_DURATION = 2;
     private final static int START_RECORD_ERR_LICENCE_VERIFICATION_FAILED = -5;
 
     static {
@@ -22,6 +28,13 @@ public class AudioRecorderTXUGC implements AudioRecorderInternalInterface, TXUGC
     private final Context mContext;
     private RecorderListener mListener;
     private boolean mEnableAiDeNoise = false;
+    private String mFilePath;
+    private int mMinRecordDurationMs = 1000;
+    private int mMaxRecordDurationMs = 60000;
+
+    private boolean isAppDebuggable() {
+        return (mContext.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    }
 
     public AudioRecorderTXUGC(Context context) {
         Log.i(TAG, "TXUGCAudioRecorder construct");
@@ -41,10 +54,16 @@ public class AudioRecorderTXUGC implements AudioRecorderInternalInterface, TXUGC
     }
 
     @Override
-    public void startRecord(@Nullable String filePath) {
-        Log.i(TAG, "start record");
+    public void startRecord(@Nullable String filePath, int minRecordDurationMs, int maxRecordDurationMs) {
+        Log.i(TAG, "start record. file path: " + filePath);
+        mFilePath = filePath;
+        mMinRecordDurationMs = minRecordDurationMs;
+        mMaxRecordDurationMs = maxRecordDurationMs;
+
         AudioConfig audioConfig = new AudioConfig();
         audioConfig.enableAIDeNoise = mEnableAiDeNoise;
+        audioConfig.minDuration = minRecordDurationMs;
+        audioConfig.maxDuration = maxRecordDurationMs;
         int result = mTxUgcAudioRecorderReflector.startRecord(filePath, audioConfig);
         Log.i(TAG, "start record. result : " + result);
         if (result == START_RECORD_ERR_LICENCE_VERIFICATION_FAILED) {
@@ -62,10 +81,7 @@ public class AudioRecorderTXUGC implements AudioRecorderInternalInterface, TXUGC
 
     @Override
     public void enableAIDeNoise(boolean enable) {
-        Log.i(TAG,
-            enable ? "enable"
-                   : "disable"
-                    + "ai de noise");
+        Log.i(TAG, enable ? "enable" : "disable" + "ai denoise");
         mEnableAiDeNoise = enable;
     }
 
@@ -86,6 +102,8 @@ public class AudioRecorderTXUGC implements AudioRecorderInternalInterface, TXUGC
         Log.i(TAG, "On record complete. retCode: " + result.retCode + " videoPath:" + result.videoPath);
         if (result.retCode == ERROR_LESS_THAN_MIN_DURATION) {
             mListener.onCompleted(ResultCode.ERROR_LESS_THAN_MIN_DURATION, result.videoPath);
+        } else if (result.retCode == SUCCESS_EXCEED_MAX_DURATION) {
+            mListener.onCompleted(ResultCode.SUCCESS_EXCEED_MAX_DURATION, result.videoPath);
         } else if (result.retCode >= 0) {
             mListener.onCompleted(ResultCode.SUCCESS, result.videoPath);
         } else {
@@ -95,13 +113,17 @@ public class AudioRecorderTXUGC implements AudioRecorderInternalInterface, TXUGC
 
     private void handleLicenceVerificationFailed() {
         Log.i(TAG, "handle licence verification failed.");
-        AudioRecorderSignatureChecker.ResultCode signatureResultCode =
-            AudioRecorderSignatureChecker.getInstance().getSetSignatureResult();
 
-        if (signatureResultCode == AudioRecorderSignatureChecker.ResultCode.SUCCESS) {
-            mListener.onCompleted(ResultCode.ERROR_USE_AI_DENOISE_WRONG_SIGNATURE, "");
-        } else {
-            mListener.onCompleted(ResultCode.Companion.fromCode(signatureResultCode.getValue()), "");
+        if (!mEnableAiDeNoise) {
+            mListener.onCompleted(ResultCode.ERROR_RECORD_INNER_FAIL, "");
+            return;
         }
+
+        mEnableAiDeNoise = false;
+        if (isAppDebuggable()) {
+            Toast.makeText(mContext, R.string.audio_authorization_prompter, Toast.LENGTH_SHORT).show();
+        }
+
+        startRecord(mFilePath, mMinRecordDurationMs, mMaxRecordDurationMs);
     }
 }

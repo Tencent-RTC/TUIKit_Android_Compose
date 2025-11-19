@@ -20,7 +20,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -37,7 +37,6 @@ android {
 }
 
 dependencies {
-    implementation("io.trtc.uikit:atomicx-core:3.4.0.1307")
 
     implementation(project(":atomic-x"))
     implementation(project(":uikit"))
@@ -54,10 +53,10 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.runtime.ktx)
     testImplementation(libs.junit)

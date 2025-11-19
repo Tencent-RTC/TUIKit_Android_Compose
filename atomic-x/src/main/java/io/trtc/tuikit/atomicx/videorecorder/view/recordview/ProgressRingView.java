@@ -7,7 +7,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
-import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfig;
+import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfigInternal;
 import org.jetbrains.annotations.Nullable;
 
 public class ProgressRingView extends View {
@@ -38,7 +38,7 @@ public class ProgressRingView extends View {
         mProgressPaint.setStrokeWidth(ZERO_PROGRESS_PAINT_WIDTH);
         mProgressPaint.setStyle(Paint.Style.STROKE);
         mProgressPaint.setAntiAlias(true);
-        int color =  VideoRecorderConfig.getInstance().getThemeColor();
+        int color =  VideoRecorderConfigInternal.getInstance().getThemeColor();
         mProgressPaint.setColor(color);
 
         mBackgroundPaint = new Paint();

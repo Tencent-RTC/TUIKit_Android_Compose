@@ -41,8 +41,8 @@ import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.contactlist.utils.displayName
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.MyGroupViewModel
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.MyGroupViewModelFactory
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
 
 @Composable
 fun MyGroup(

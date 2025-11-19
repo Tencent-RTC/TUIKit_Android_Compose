@@ -12,10 +12,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
 
-import io.trtc.tuikit.atomicxcore.api.LoginStore;
+import io.trtc.tuikit.atomicxcore.api.login.LoginStore;
 
 public class VideoRecorderSignatureChecker {
-    private static final String TAG = "SignatureChecker";
+    private static final String TAG = "VideoRecorderSignature";
 
     private static final String KEY_APP_ID = "appid";
     private static final String KEY_SIGNATURE = "signature";

@@ -1,9 +1,14 @@
 package io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -13,13 +18,17 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import io.trtc.tuikit.atomicx.R
+import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.messagelist.ui.LocalMessageInteraction
 import io.trtc.tuikit.atomicx.messagelist.ui.LocalMessageListViewModel
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageRenderer
+import io.trtc.tuikit.atomicx.messagelist.utils.DateTimeUtils
 import io.trtc.tuikit.atomicx.messagelist.utils.ImageUtils
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 
 class VideoMessageRenderer : MessageRenderer<MessageInfo> {
     @Composable
@@ -31,7 +40,7 @@ class VideoMessageRenderer : MessageRenderer<MessageInfo> {
         val viewModel = LocalMessageListViewModel.current
         val messageViewModel = LocalMessageListViewModel.current
         val messageInteraction = LocalMessageInteraction.current
-
+        val colors = LocalTheme.current.colors
         LaunchedEffect(Unit) {
             messageViewModel.downloadVideoSnapShot(message)
         }
@@ -57,6 +66,17 @@ class VideoMessageRenderer : MessageRenderer<MessageInfo> {
                 painter = painterResource(R.drawable.message_list_video_play_icon),
                 contentDescription = "",
                 tint = Color.Unspecified
+            )
+
+            Text(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = -4.dp, y = -4.dp)
+                    .background(color = colors.bgColorElementMask, shape = RoundedCornerShape(4.dp))
+                    .padding(horizontal = 2.dp),
+                text = DateTimeUtils.formatSmartTime(message.messageBody?.videoDuration),
+                fontSize = 10.sp,
+                color = colors.textColorButton
             )
         }
     }

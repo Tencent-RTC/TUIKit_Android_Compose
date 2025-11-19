@@ -58,8 +58,8 @@ import io.trtc.tuikit.atomicx.contactlist.viewmodels.ChatType
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.GroupFlowStep
 import io.trtc.tuikit.atomicx.userpicker.UserPicker
 import io.trtc.tuikit.atomicx.userpicker.UserPickerState
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
 
 @Composable
 fun AddNewChatBottomSheet(

@@ -23,8 +23,8 @@ import androidx.annotation.NonNull;
 
 import io.trtc.tuikit.atomicx.R;
 import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecorderRecordCore;
-import io.trtc.tuikit.atomicx.videorecorder.view.AuthorizationPrompter;
-import io.trtc.tuikit.atomicx.videorecorder.view.AuthorizationPrompter.PrompterType;
+import io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderAuthorizationPrompter;
+import io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderAuthorizationPrompter.PrompterType;
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.BeautyInfo;
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.BeautyInnerType;
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.BeautyItem;
@@ -336,7 +336,7 @@ public class BeautyFilterScrollView extends RelativeLayout implements View.OnTou
 
         mLastShowPrompterDialogTimestamp = System.currentTimeMillis();
         new Handler(Looper.getMainLooper()).postDelayed(
-                () -> AuthorizationPrompter.showPermissionPrompterDialog(getContext(),
+                () -> VideoRecorderAuthorizationPrompter.showPermissionPrompterDialog(getContext(),
                         mRecordCore.isUGCRecorderCore() ? PrompterType.NO_SIGNATURE : PrompterType.NO_LITEAV_SDK),200);
     }
 }

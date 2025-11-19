@@ -1,9 +1,9 @@
 package io.trtc.tuikit.atomicx.videorecorder
 
-import io.trtc.tuikit.atomicx.videorecorder.impl.VideoRecorderImpl
+import io.trtc.tuikit.atomicx.videorecorder.impl.VideoRecorderViewImpl
 
 object VideoRecorder {
-    private val instance = VideoRecorderImpl()
+    private val instance = VideoRecorderViewImpl()
 
     /**
      * Launches the camera capture interface
@@ -11,34 +11,24 @@ object VideoRecorder {
      * @param listener Callback interface for receiving capture results, including:
      *                 - Photo capture success
      *                 - Video recording success
-     *                 - Error events
      */
-    fun takeVideo(config: TakeVideoConfig = TakeVideoConfig(), listener: RecordListener) {
+    fun startRecord(config: VideoRecorderConfig = VideoRecorderConfig(), listener: VideoRecordListener) {
         instance.takeVideo(config, listener)
-    }
-
-    fun takePhoto(config: TakePhotoConfig = TakePhotoConfig(), listener: RecordListener) {
-        val takeVideoConfig = TakeVideoConfig(
-            recordMode = RecordMode.PHOTO_ONLY,
-            primaryColor = config.primaryColor,
-            defaultFrontCamera = config.defaultFrontCamera
-        )
-        instance.takeVideo(takeVideoConfig, listener)
     }
 }
 
-data class TakeVideoConfig(
-    val maxVideoDuration: Int? = null,
-    val minVideoDuration: Int? = null,
-    val videoQuality: VideoQuality? = null,
-    val recordMode: RecordMode? = null,
-    val primaryColor: String? = null,
-    val defaultFrontCamera: Boolean? = null
-)
-
-data class TakePhotoConfig(
-    val primaryColor: String? = null,
-    val defaultFrontCamera: Boolean? = null
+data class VideoRecorderConfig(
+    var recordMode: RecordMode? = null,
+    var videoQuality: VideoQuality? = null,
+    var minDurationMs: Int? = null,
+    var maxDurationMs: Int? = null,
+    var isDefaultFrontCamera: Boolean? = null,
+    var primaryColor: String? = null,
+    var isSupportEdit: Boolean? = null,
+    var isSupportBeauty: Boolean? = null,
+    var isSupportRecordScrollFilter: Boolean? = null,
+    var isSupportTorch: Boolean? = null,
+    var isSupportAspect:Boolean? = null
 )
 
 enum class RecordMode(val value: Int) {
@@ -53,12 +43,10 @@ enum class RecordMode(val value: Int) {
     }
 }
 
-interface RecordListener {
-    fun onPhotoCaptured(filePath: String) {}
+interface VideoRecordListener {
+    fun onPhotoCaptured(filePath: String?) {}
 
-    fun onVideoCaptured(filePath: String, duration: Int) {}
-
-    fun onError(errorCode: VideoRecordeErrorCode) {}
+    fun onVideoCaptured(filePath: String?, durationMs: Int) {}
 }
 
 enum class VideoQuality(val value: Int) {
@@ -71,10 +59,4 @@ enum class VideoQuality(val value: Int) {
             return VideoQuality.entries.find { it.value == value } ?: LOW
         }
     }
-}
-
-enum class VideoRecordeErrorCode(val value: Int) {
-    PERMISSION_DENIED(-1),
-    RECORDE_CANCEL(-2),
-    RECORDE_INNER_ERROR(-3);
 }

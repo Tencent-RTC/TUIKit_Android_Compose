@@ -50,9 +50,9 @@ import io.trtc.tuikit.atomicx.chatsetting.ui.AvatarSelector
 import io.trtc.tuikit.atomicx.chatsetting.ui.TextInputBottomSheet
 import io.trtc.tuikit.atomicx.chatsetting.viewmodels.getUserAvatarUrls
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
-import io.trtc.tuikit.atomicxcore.api.Gender
-import io.trtc.tuikit.atomicxcore.api.LoginStore
-import io.trtc.tuikit.atomicxcore.api.UserProfile
+import io.trtc.tuikit.atomicxcore.api.login.Gender
+import io.trtc.tuikit.atomicxcore.api.login.LoginStore
+import io.trtc.tuikit.atomicxcore.api.login.UserProfile
 import io.trtc.tuikit.chat.viewmodels.SettingsViewModel
 import io.trtc.tuikit.chat.viewmodels.displayName
 import java.text.SimpleDateFormat

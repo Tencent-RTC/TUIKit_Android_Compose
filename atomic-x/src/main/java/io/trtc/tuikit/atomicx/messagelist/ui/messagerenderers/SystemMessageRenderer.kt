@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.sp
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageRenderer
 import io.trtc.tuikit.atomicx.messagelist.utils.MessageUtils
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 
 class SystemMessageRenderer : MessageRenderer<MessageInfo> {
     @Composable

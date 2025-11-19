@@ -28,14 +28,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -45,35 +43,37 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.trtc.tuikit.atomicx.R
-import io.trtc.tuikit.atomicx.audiorecorder.AudioRecorder
-import io.trtc.tuikit.atomicx.audiorecorder.AudioRecorderListener
-import io.trtc.tuikit.atomicx.audiorecorder.audiorecordercore.ResultCode
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Toast
+import io.trtc.tuikit.atomicx.audiorecorder.AudioRecorderView
+import io.trtc.tuikit.atomicx.audiorecorder.AudioRecorderViewConfig
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.emojipicker.ui.EmojiPicker
+import io.trtc.tuikit.atomicx.messageinput.config.ChatMessageInputConfig
+import io.trtc.tuikit.atomicx.messageinput.config.MessageInputConfigProtocol
 import io.trtc.tuikit.atomicx.messageinput.utils.KeyboardActionType
 import io.trtc.tuikit.atomicx.messageinput.utils.rememberKeyboardState
 import io.trtc.tuikit.atomicx.messageinput.viewmodels.AUDIO_MAX_RECORD_TIME
+import io.trtc.tuikit.atomicx.messageinput.viewmodels.AUDIO_MIN_RECORD_TIME
 import io.trtc.tuikit.atomicx.messageinput.viewmodels.MessageInputViewModel
 import io.trtc.tuikit.atomicx.messageinput.viewmodels.MessageInputViewModelFactory
-import io.trtc.tuikit.atomicxcore.api.MessageInputStore
-
+import io.trtc.tuikit.atomicxcore.api.message.MessageInputStore
 
 @Composable
 fun MessageInput(
     conversationID: String,
     modifier: Modifier = Modifier,
+    config: MessageInputConfigProtocol = ChatMessageInputConfig(),
     messageInputViewModelFactory: MessageInputViewModelFactory =
         MessageInputViewModelFactory(MessageInputStore.create(conversationID)),
 ) {
     val messageInputViewModel =
         viewModel(MessageInputViewModel::class, factory = messageInputViewModelFactory)
-    MessageInput(modifier, messageInputViewModel)
+    MessageInput(modifier = modifier, config = config, messageInputViewModel = messageInputViewModel)
 }
 
 @Composable
-fun MessageInput(
+private fun MessageInput(
     modifier: Modifier,
+    config: MessageInputConfigProtocol,
     messageInputViewModel: MessageInputViewModel
 ) {
     val keyboardState = rememberKeyboardState()
@@ -95,10 +95,6 @@ fun MessageInput(
     val editTextState = rememberAndroidEditTextState()
     var isShowActions by remember { mutableStateOf(false) }
 
-    var audioRecordingState by remember { mutableStateOf(AudioRecordingState.IDLE) }
-    var isAudioRecorderVisible by remember { mutableStateOf(false) }
-    var isTimerRunning by remember { mutableStateOf(false) }
-    var isRecordingCancelled by remember { mutableStateOf(false) }
 
     var targetPanelHeight by remember { mutableStateOf(0.dp) }
     var isUserKeyboardHeight by remember { mutableStateOf(false) }
@@ -204,54 +200,6 @@ fun MessageInput(
         )
     }
 
-    fun startRecording() {
-        isAudioRecorderVisible = true
-        audioRecordingState = AudioRecordingState.RECORDING
-        isTimerRunning = true
-        isRecordingCancelled = false
-
-        AudioRecorder.startRecord(enableAIDeNoise = false, listener = object : AudioRecorderListener {
-
-            override fun onCompleted(
-                resultCode: ResultCode,
-                path: String?,
-                duration: Int
-            ) {
-                println("onRecordingComplete success:$resultCode, path:$path, duration:$duration")
-                isTimerRunning = false
-                audioRecordingState = AudioRecordingState.IDLE
-                isAudioRecorderVisible = false
-                if (resultCode == ResultCode.SUCCESS && !path.isNullOrEmpty()) {
-                    messageInputViewModel.sendAudioMessage(path, duration)
-                }
-            }
-        })
-    }
-
-    fun stopRecording() {
-        isTimerRunning = false
-        isAudioRecorderVisible = false
-        AudioRecorder.stopRecord()
-    }
-
-    fun cancelRecording() {
-        isTimerRunning = false
-        isRecordingCancelled = true
-        audioRecordingState = AudioRecordingState.IDLE
-        isAudioRecorderVisible = false
-        AudioRecorder.cancelRecord()
-    }
-
-    fun updateDragToCancel(shouldCancel: Boolean) {
-        if (audioRecordingState == AudioRecordingState.IDLE) {
-            return
-        }
-        audioRecordingState = if (shouldCancel) {
-            AudioRecordingState.READY_TO_CANCEL
-        } else {
-            AudioRecordingState.RECORDING
-        }
-    }
 
     Box(
         modifier = modifier
@@ -264,7 +212,6 @@ fun MessageInput(
         ) {
             Box(
                 modifier = Modifier
-                    .alpha(if (isAudioRecorderVisible) 0f else 1f)
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp, vertical = 8.dp)
             ) {
@@ -273,19 +220,20 @@ fun MessageInput(
                     horizontalArrangement = Arrangement.spacedBy(0.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    InputIconButton(onClick = {
-                        isShowActions = true
-                    }) {
-                        Icon(
-                            modifier = Modifier.size(24.dp),
-                            painter = painterResource(R.drawable.message_input_more_icon),
-                            tint = colors.textColorLink,
-                            contentDescription = "more"
-                        )
+                    if (config.isShowMore) {
+                        InputIconButton(onClick = {
+                            isShowActions = true
+                        }) {
+                            Icon(
+                                modifier = Modifier.size(24.dp),
+                                painter = painterResource(R.drawable.message_input_more_icon),
+                                tint = colors.textColorLink,
+                                contentDescription = "more"
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(4.dp))
                     }
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
                     Row(
                         modifier =
                             Modifier
@@ -368,45 +316,34 @@ fun MessageInput(
                             )
                         }
                     }
+                    if (config.isShowAudioRecorder) {
+                        Spacer(modifier = Modifier.width(8.dp))
 
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .audioRecordGesture(
-                                onStart = {
-                                    startRecording()
-                                },
-                                onStop = {
-                                    stopRecording()
-                                },
-                                onCancel = {
-                                    cancelRecording()
-                                },
-                                onDragToCancel = { shouldCancel ->
-                                    updateDragToCancel(shouldCancel)
-                                }
+                        AudioRecorderView(
+                            modifier = Modifier.padding(8.dp),
+                            config = AudioRecorderViewConfig(
+                                enableAIDeNoise = true,
+                                minDurationMs = AUDIO_MIN_RECORD_TIME,
+                                maxDurationMs = AUDIO_MAX_RECORD_TIME,
                             )
-                            .padding(8.dp)
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(24.dp),
-                            painter = painterResource(R.drawable.message_input_microphone_icon),
-                            tint = colors.textColorLink,
-                            contentDescription = "microphone"
-                        )
+                        ) { path, durationMs ->
+                            if (!path.isNullOrEmpty()) {
+                                messageInputViewModel.sendAudioMessage(path, durationMs / 1000)
+                            }
+                        }
                     }
-
-                    InputIconButton(onClick = {
-                        transitionToState(InputState.NONE)
-                        messageInputViewModel.recordVideoAndSend(activity ?: context)
-                    }) {
-                        Icon(
-                            modifier = Modifier.size(24.dp),
-                            painter = painterResource(R.drawable.message_input_camera_icon),
-                            tint = colors.textColorLink,
-                            contentDescription = "camera"
-                        )
+                    if (config.isShowPhotoTaker) {
+                        InputIconButton(onClick = {
+                            transitionToState(InputState.NONE)
+                            messageInputViewModel.recordVideoAndSend(activity ?: context)
+                        }) {
+                            Icon(
+                                modifier = Modifier.size(24.dp),
+                                painter = painterResource(R.drawable.message_input_camera_icon),
+                                tint = colors.textColorLink,
+                                contentDescription = "camera"
+                            )
+                        }
                     }
                 }
             }
@@ -436,21 +373,6 @@ fun MessageInput(
             }
 
         }
-        val currentTime by AudioRecorder.currentTime.collectAsState()
-        val currentPower by AudioRecorder.currentPower.collectAsState()
-
-        LaunchedEffect(currentTime, audioRecordingState, isAudioRecorderVisible) {
-            if (isAudioRecorderVisible && audioRecordingState != AudioRecordingState.IDLE && currentTime >= AUDIO_MAX_RECORD_TIME) {
-                stopRecording()
-                Toast.info(context, context.getString(R.string.message_input_recording_time_exceeded))
-            }
-        }
-        AudioRecorderLayout(
-            isVisible = isAudioRecorderVisible,
-            recordingState = audioRecordingState,
-            recordingDuration = currentTime,
-            amplitude = currentPower
-        )
 
         ActionsDialog(
             isVisible = isShowActions,

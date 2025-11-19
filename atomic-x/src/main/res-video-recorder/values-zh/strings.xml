@@ -81,6 +81,10 @@
 <!--    <string name="video_recorder_authorization_prompter_remove_module">2. 您也可以在工程的config文件中屏蔽该功能（config文件位置 assets/config/video_recorder_config.json）</string>-->
 <!--    <string name="video_recorder_authorization_prompter_documents_title">多媒体插件开通指引</string>-->
 
+    <string name="audio_authorization_prompter">当前配置不能开启AI降噪.仅Debug版本有该提示</string>
+    <string name="audio_recorder_less_than_min_time">语音录制时长太短</string>
+    <string name="audio_record_time_limit_reached">语音录制时长达到上限</string>
+
     <string name="authorization_prompter_no_signature">由于您未开通多媒体插件使用权限，您当前功能将受限, 您可以在CONFIG中屏蔽相关功能，也可以开通多媒体插件权限继续使用该功能，详情请阅读模块下的READ.ME文件</string>
     <string name="authorization_prompter_no_liteav_sdk">由于您的工程配置，您当前功能将受限，您可以在CONFIG中屏蔽相关功能，也可以更改您的工程配置继续使用该功能，详情请阅读模块下的READ.ME文件</string>
 

@@ -44,7 +44,7 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.chatsetting.viewmodels.FriendPickerViewModel
 import io.trtc.tuikit.atomicx.contactlist.utils.displayName
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
 
 @Composable
 fun FriendPickerDialog(

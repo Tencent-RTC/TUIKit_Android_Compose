@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
 
-import io.trtc.tuikit.atomicxcore.api.LoginStore;
+import io.trtc.tuikit.atomicxcore.api.login.LoginStore;
 
 public class AudioRecorderSignatureChecker {
     private static final String TAG = "SignatureChecker";

@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import io.trtc.tuikit.atomicx.R;
-import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfig;
+import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfigInternal;
 import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConstants;
 import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecordCoreConstant;
 import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecorderRecordCore;
@@ -109,9 +109,9 @@ public class VideoRecorderFragment extends Fragment {
     }
 
     private void initParameters() {
-        mVideoRecorderRecordCore.setMaxDuration(VideoRecorderConfig.getInstance().getMaxRecordDurationMs());
-        mVideoRecorderRecordCore.setMinDuration(VideoRecorderConfig.getInstance().getMinRecordDurationMs());
-        mVideoRecorderRecordCore.setVideoQuality(VideoRecorderConfig.getInstance().getVideoQuality());
+        mVideoRecorderRecordCore.setMaxDuration(VideoRecorderConfigInternal.getInstance().getMaxRecordDurationMs());
+        mVideoRecorderRecordCore.setMinDuration(VideoRecorderConfigInternal.getInstance().getMinRecordDurationMs());
+        mVideoRecorderRecordCore.setVideoQuality(VideoRecorderConfigInternal.getInstance().getVideoQuality());
         mVideoRecorderRecordCore.setIsNeedEdit(false);
     }
 

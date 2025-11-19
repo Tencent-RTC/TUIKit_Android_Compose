@@ -7,7 +7,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 import io.trtc.tuikit.atomicx.R;
-import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfig;
+import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfigInternal;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderResourceUtils;
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.BeautyInfo;
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.BeautyItem;
@@ -112,7 +112,7 @@ public class BeautyItemAdapter extends BeautyScrollViewAdapter {
             if (selected) {
                 background.setBackground(
                         VideoRecorderResourceUtils.getDrawable(context, R.drawable.video_recorder_beauty_backgroud_selected,
-                                VideoRecorderConfig.getInstance().getThemeColor()));
+                                VideoRecorderConfigInternal.getInstance().getThemeColor()));
             } else {
                 background.setBackground(null);
             }

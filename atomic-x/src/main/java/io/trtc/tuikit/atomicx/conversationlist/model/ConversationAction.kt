@@ -1,5 +1,6 @@
 package io.trtc.tuikit.atomicx.conversationlist.model
 
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationInfo
 
 enum class ConversationActionType {
     DELETE,
@@ -18,3 +19,6 @@ data class ConversationMenuAction(
     var dangerous: Boolean = false,
     var type: ConversationActionType = ConversationActionType.PIN,
 )
+
+data class ConversationCustomAction(val title: String, val action: (ConversationInfo) -> Unit)
+

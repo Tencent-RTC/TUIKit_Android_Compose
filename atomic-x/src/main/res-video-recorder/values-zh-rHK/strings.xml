@@ -88,6 +88,9 @@
     <string name="authorization_prompter_no_signature">由於您未開通多媒體挿件使用許可權，您當前功能將受限，您可以在CONFIG中遮罩相關功能，也可以開通多媒體挿件許可權繼續使用該功能，詳情請閱讀模塊下的READ.ME檔案</string>
     <string name="authorization_prompter_no_liteav_sdk">由於您的工程配寘，您當前功能將受限，您可以在CONFIG中遮罩相關功能，也可以更改您的工程配寘繼續使用該功能，詳情請閱讀模塊下的READ.ME檔案</string>
 
+    <string name="audio_authorization_prompter">當前配寘不能開啟AI降噪. 僅Debug版本有該提示</string>
+    <string name="audio_recorder_less_than_min_time">語音錄製時長太短了</string>
+    <string name="audio_record_time_limit_reached">語音錄影時長上限</string>
 
     <string name="prompter">提示</string>
     <string name="link_error">無法打開連結</string>

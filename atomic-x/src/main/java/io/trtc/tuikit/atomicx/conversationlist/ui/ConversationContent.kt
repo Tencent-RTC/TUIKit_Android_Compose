@@ -35,10 +35,10 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Badge
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.emojipicker.rememberEmojiKeyToName
 import io.trtc.tuikit.atomicx.messagelist.utils.MessageUtils
-import io.trtc.tuikit.atomicxcore.api.ConversationInfo
-import io.trtc.tuikit.atomicxcore.api.ConversationReceiveOption
-import io.trtc.tuikit.atomicxcore.api.GroupType
-import io.trtc.tuikit.atomicxcore.api.MessageStatus
+import io.trtc.tuikit.atomicxcore.api.contact.GroupType
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationInfo
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationReceiveOption
+import io.trtc.tuikit.atomicxcore.api.message.MessageStatus
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable

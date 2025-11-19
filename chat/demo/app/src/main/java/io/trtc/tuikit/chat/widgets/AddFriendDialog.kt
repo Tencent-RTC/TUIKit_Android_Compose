@@ -25,7 +25,7 @@ import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.contactlist.ui.addfriendandgroup.AddFriendForm
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
 
 @Composable
 fun AddFriendDialog(contactInfo: ContactInfo, onDismiss: () -> Unit) {

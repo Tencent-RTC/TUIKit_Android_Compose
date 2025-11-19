@@ -29,14 +29,16 @@ data class ThemeConfig(
     val primaryColor: String?
 ) : Parcelable
 
-val DefaultTheme = ThemeState()
-val LocalTheme = compositionLocalOf { DefaultTheme }
+val LocalTheme = compositionLocalOf { ThemeState.shared }
 
-open class ThemeState {
+class ThemeState {
     companion object {
         private const val THEME_KEY = "BaseComponentThemeKey"
         private val json = Json { ignoreUnknownKeys = true }
+        val shared = ThemeState()
     }
+
+    private constructor()
 
     private var _currentTheme = mutableStateOf(ThemeConfig(ThemeMode.SYSTEM, null))
 
@@ -60,8 +62,13 @@ open class ThemeState {
     val hasCustomPrimaryColor: Boolean
         get() = _currentTheme.value.primaryColor != null
 
-    val availableThemeModes: List<ThemeMode>
-        get() = ThemeMode.entries
+    val isDarkMode: Boolean
+        @Composable
+        get() = when (currentMode) {
+            ThemeMode.DARK -> true
+            ThemeMode.LIGHT -> false
+            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        }
 
     fun setThemeMode(mode: ThemeMode) {
         clearCache()
@@ -82,12 +89,6 @@ open class ThemeState {
     fun clearPrimaryColor() {
         clearCache()
         _currentTheme.value = ThemeConfig(_currentTheme.value.mode, null)
-        saveTheme()
-    }
-
-    fun setTheme(theme: ThemeConfig) {
-        clearCache()
-        _currentTheme.value = theme
         saveTheme()
     }
 
@@ -134,13 +135,13 @@ open class ThemeState {
 
     val colors: ColorScheme
         @Composable get() {
-            if (cachedColorScheme != null && cachedThemeConfig == currentTheme) {
+            if (cachedColorScheme != null && cachedThemeConfig == _currentTheme.value) {
                 return cachedColorScheme!!
             }
 
             val newColorScheme = calculateColorScheme()
             cachedColorScheme = newColorScheme
-            cachedThemeConfig = currentTheme
+            cachedThemeConfig = _currentTheme.value
 
             return newColorScheme
         }
@@ -156,13 +157,13 @@ open class ThemeState {
 
     @Composable
     private fun calculateColorScheme(): ColorScheme {
-        val effectiveMode = when (currentTheme.mode) {
+        val effectiveMode = when (currentMode) {
             ThemeMode.SYSTEM -> if (isSystemInDarkTheme()) ThemeMode.DARK else ThemeMode.LIGHT
-            else -> currentTheme.mode
+            else -> currentMode
         }
 
-        return if (currentTheme.primaryColor != null) {
-            val primary = ThemeColorGenerator.hexToColor(currentTheme.primaryColor!!)
+        return if (_currentTheme.value.primaryColor != null) {
+            val primary = ThemeColorGenerator.hexToColor(_currentTheme.value.primaryColor!!)
             getCustomScheme(
                 isLight = effectiveMode == ThemeMode.LIGHT,
                 baseScheme = if (effectiveMode == ThemeMode.LIGHT) LightColorScheme else DarkColorScheme,

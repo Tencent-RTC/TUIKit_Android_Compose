@@ -47,10 +47,9 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Avatar
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.chatsetting.viewmodels.GroupMemberListViewModel
-import io.trtc.tuikit.atomicxcore.api.GroupMember
-import io.trtc.tuikit.atomicxcore.api.GroupMemberRole
+import io.trtc.tuikit.atomicxcore.api.contact.GroupMember
+import io.trtc.tuikit.atomicxcore.api.contact.GroupMemberRole
 import kotlinx.coroutines.flow.distinctUntilChanged
-
 
 @Composable
 fun GroupMemberList(

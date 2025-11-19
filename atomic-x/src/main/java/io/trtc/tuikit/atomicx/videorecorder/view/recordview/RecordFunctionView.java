@@ -15,8 +15,8 @@ import io.trtc.tuikit.atomicx.R;
 import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecorderRecordCore;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderData.VideoRecorderDataObserver;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderResourceUtils;
-import io.trtc.tuikit.atomicx.videorecorder.view.AuthorizationPrompter;
-import io.trtc.tuikit.atomicx.videorecorder.view.AuthorizationPrompter.PrompterType;
+import io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderAuthorizationPrompter;
+import io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderAuthorizationPrompter.PrompterType;
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.RecordInfo;
 import io.trtc.tuikit.atomicx.videorecorder.view.recordview.beauty.data.RecordInfo.RecordStatus;
 
@@ -41,7 +41,7 @@ public class RecordFunctionView extends LinearLayout {
                 mOperationViewContainer.setVisibility(isShowBeautyView ? GONE : VISIBLE);
             }
             if (isShowBeautyView && !mRecordCore.isSupportAdvanceFunction()) {
-                AuthorizationPrompter.showPermissionPrompterDialog(mContext,
+                VideoRecorderAuthorizationPrompter.showPermissionPrompterDialog(mContext,
                         mRecordCore.isUGCRecorderCore() ? PrompterType.NO_SIGNATURE : PrompterType.NO_LITEAV_SDK);
             }
         }

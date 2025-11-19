@@ -14,7 +14,11 @@ import io.trtc.tuikit.atomicx.R;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderResourceUtils;
 import java.util.Objects;
 
-public class AuthorizationPrompter {
+public class VideoRecorderAuthorizationPrompter {
+
+    private static boolean isAppDebuggable(Context context) {
+        return (context.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    }
 
     public enum PrompterType {
         NO_SIGNATURE,
@@ -22,6 +26,10 @@ public class AuthorizationPrompter {
     }
 
     public static void showPermissionPrompterDialog(Context context, PrompterType prompterType) {
+        if (!isAppDebuggable(context)) {
+            return;
+        }
+
         View dialogView = LayoutInflater.from(context).inflate(R.layout.video_recorder_authorization_prompter, null);
         TextView prompterTv = dialogView.findViewById(R.id.video_recorder_authorization_prompter_tv);
 

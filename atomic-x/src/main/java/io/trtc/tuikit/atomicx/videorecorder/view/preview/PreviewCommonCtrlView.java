@@ -2,13 +2,11 @@ package io.trtc.tuikit.atomicx.videorecorder.view.preview;
 
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
@@ -17,7 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import io.trtc.tuikit.atomicx.R;
-import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfig;
+import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfigInternal;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderResourceUtils;
 
 public class PreviewCommonCtrlView extends RelativeLayout {
@@ -128,7 +126,7 @@ public class PreviewCommonCtrlView extends RelativeLayout {
         Button button = mRootView.findViewById(R.id.send_btn);
         button.setBackground(
                 VideoRecorderResourceUtils.getDrawable(mContext, R.drawable.video_edit_send_button,
-                        VideoRecorderConfig.getInstance().getThemeColor()));
+                        VideoRecorderConfigInternal.getInstance().getThemeColor()));
         button.setGravity(Gravity.CENTER);
         button.setText(VideoRecorderResourceUtils.getString(R.string.video_recorder_send));
 

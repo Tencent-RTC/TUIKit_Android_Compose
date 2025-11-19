@@ -12,14 +12,14 @@ import androidx.compose.ui.res.stringResource
 import io.trtc.tuikit.atomicx.basecomponent.theme.Colors
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.contactlist.ui.ContactList
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
 import io.trtc.tuikit.chat.R
 import io.trtc.tuikit.chat.widgets.PageHeader
 
 @Composable
 fun ContactsPage(
-    onGroupClick: (ContactInfo) -> Unit = {},
     onContactClick: (ContactInfo) -> Unit = {},
+    onGroupClick: (ContactInfo) -> Unit = {},
     editContent: @Composable () -> Unit = {},
 ) {
 

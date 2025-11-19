@@ -49,8 +49,8 @@ import io.trtc.tuikit.atomicx.contactlist.utils.statusText
 import io.trtc.tuikit.atomicx.contactlist.utils.toUserDisplayName
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.GroupApplicationViewModel
 import io.trtc.tuikit.atomicx.contactlist.viewmodels.GroupApplicationViewModelFactory
-import io.trtc.tuikit.atomicxcore.api.ContactListStore
-import io.trtc.tuikit.atomicxcore.api.GroupApplicationInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
+import io.trtc.tuikit.atomicxcore.api.contact.GroupApplicationInfo
 
 @Composable
 fun GroupApplication(

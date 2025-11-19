@@ -3,8 +3,8 @@ package io.trtc.tuikit.atomicx.messagelist.ui
 import androidx.compose.runtime.Composable
 import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.DefaultMessageRenderer
 import io.trtc.tuikit.atomicx.messagelist.utils.jsonData2Dictionary
-import io.trtc.tuikit.atomicxcore.api.MessageInfo
-import io.trtc.tuikit.atomicxcore.api.MessageType
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
+import io.trtc.tuikit.atomicxcore.api.message.MessageType
 
 fun interface MessageRenderer<T : MessageInfo> {
     @Composable

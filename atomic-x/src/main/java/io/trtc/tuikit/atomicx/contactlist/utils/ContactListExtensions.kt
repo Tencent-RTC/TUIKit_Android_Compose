@@ -2,13 +2,13 @@ package io.trtc.tuikit.atomicx.contactlist.utils
 
 import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.basecomponent.utils.ContextProvider
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
-import io.trtc.tuikit.atomicxcore.api.FriendApplicationInfo
-import io.trtc.tuikit.atomicxcore.api.GroupApplicationHandledResult
-import io.trtc.tuikit.atomicxcore.api.GroupApplicationHandledStatus
-import io.trtc.tuikit.atomicxcore.api.GroupApplicationInfo
-import io.trtc.tuikit.atomicxcore.api.GroupApplicationType
-import io.trtc.tuikit.atomicxcore.api.UserProfile
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.FriendApplicationInfo
+import io.trtc.tuikit.atomicxcore.api.contact.GroupApplicationHandledResult
+import io.trtc.tuikit.atomicxcore.api.contact.GroupApplicationHandledStatus
+import io.trtc.tuikit.atomicxcore.api.contact.GroupApplicationInfo
+import io.trtc.tuikit.atomicxcore.api.contact.GroupApplicationType
+import io.trtc.tuikit.atomicxcore.api.login.UserProfile
 
 val ContactInfo.displayName
     get() = title ?: contactID

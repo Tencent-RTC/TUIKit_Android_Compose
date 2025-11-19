@@ -48,11 +48,7 @@ public class VideoRecorderRecordCore {
     private long mStartRecordTime;
     private Handler mMainHandler;
     private boolean mStopProgressUpdates;
-
-    static {
-        VideoRecorderSignatureChecker.getInstance().startUpdateSignature();
-    }
-
+    
     private final IVideoRecordListener mVideoRecordListener = new IVideoRecordListener() {
         @Override
         public void onStartPreviewError(int eventCode) {
@@ -179,7 +175,7 @@ public class VideoRecorderRecordCore {
         if (isFront) {
             toggleTorch(false);
         }
-        mRecordInfo.isFontCamera.set(isFront);
+        mRecordInfo.isFrontCamera.set(isFront);
         mVideoRecorder.switchCamera(isFront);
     }
 
@@ -333,7 +329,7 @@ public class VideoRecorderRecordCore {
         customConfig.minDuration = mMinDuration;
         customConfig.touchFocus = false;
         customConfig.needEdit = false;
-        customConfig.isFront = mRecordInfo.isFontCamera.get();
+        customConfig.isFront = mRecordInfo.isFrontCamera.get();
     }
 
     private void setBaseVideoEncodeParamWithQuality(VideoQuality quality,

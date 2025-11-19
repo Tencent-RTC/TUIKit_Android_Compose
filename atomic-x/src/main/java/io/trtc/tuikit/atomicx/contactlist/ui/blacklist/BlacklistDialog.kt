@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.DialogProperties
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
-import io.trtc.tuikit.atomicxcore.api.ContactInfo
+import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
 
 @Composable
 fun BlacklistDialog(isVisible: Boolean, onDismiss: () -> Unit, onContactClick: (ContactInfo) -> Unit) {
