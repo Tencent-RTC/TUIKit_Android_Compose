@@ -10,6 +10,7 @@ import android.view.WindowManager;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import io.trtc.tuikit.atomicx.R;
+import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderResourceUtils;
 
 public class VideoRecorderActivity extends AppCompatActivity {
 
@@ -18,6 +19,7 @@ public class VideoRecorderActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         Log.i(TAG, "onCreate");
+        VideoRecorderResourceUtils.setContext(this);
         super.onCreate(savedInstanceState);
         initStatusBar();
         setContentView(R.layout.video_recorder_activity);

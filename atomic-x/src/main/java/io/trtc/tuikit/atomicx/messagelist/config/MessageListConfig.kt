@@ -24,6 +24,9 @@ interface MessageListConfigProtocol {
     val isSupportCopy: Boolean
     val isSupportDelete: Boolean
     val isSupportRecall: Boolean
+    val isSupportMultiSelect: Boolean
+    val isSupportForward: Boolean
+    val isSupportReaction: Boolean
 }
 
 class ChatMessageListConfig : MessageListConfigProtocol {
@@ -43,6 +46,9 @@ class ChatMessageListConfig : MessageListConfigProtocol {
     private var _isSupportCopy: Boolean? = null
     private var _isSupportDelete: Boolean? = null
     private var _isSupportRecall: Boolean? = null
+    private var _isSupportMultiSelect: Boolean? = null
+    private var _isSupportForward: Boolean? = null
+    private var _isSupportReaction: Boolean? = null
 
     constructor(
         alignment: MessageAlignment? = null,
@@ -60,6 +66,9 @@ class ChatMessageListConfig : MessageListConfigProtocol {
         isSupportCopy: Boolean? = null,
         isSupportDelete: Boolean? = null,
         isSupportRecall: Boolean? = null,
+        isSupportMultiSelect: Boolean? = null,
+        isSupportForward: Boolean? = null,
+        isSupportReaction: Boolean? = null,
     ) {
         _alignment = alignment
         _isShowTimeMessage = isShowTimeMessage
@@ -76,6 +85,9 @@ class ChatMessageListConfig : MessageListConfigProtocol {
         _isSupportCopy = isSupportCopy
         _isSupportDelete = isSupportDelete
         _isSupportRecall = isSupportRecall
+        _isSupportMultiSelect = isSupportMultiSelect
+        _isSupportForward = isSupportForward
+        _isSupportReaction = isSupportReaction
     }
 
     override var alignment: MessageAlignment
@@ -169,6 +181,26 @@ class ChatMessageListConfig : MessageListConfigProtocol {
         get() = _avatarSpacing ?: 8.0.dp
         set(value) {
             _avatarSpacing = value
+        }
+
+    override var isSupportMultiSelect: Boolean
+        get() = _isSupportMultiSelect
+            ?: true
+        set(value) {
+            _isSupportMultiSelect = value
+        }
+
+    override var isSupportForward: Boolean
+        get() = _isSupportForward
+            ?: true
+        set(value) {
+            _isSupportForward = value
+        }
+
+    override var isSupportReaction: Boolean
+        get() = _isSupportReaction ?: true
+        set(value) {
+            _isSupportReaction = value
         }
 
 }

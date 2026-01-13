@@ -1,17 +1,25 @@
-package io.trtc.tuikit.atomicx.imagepicker
+package io.trtc.tuikit.atomicx.videopicker
 
-import android.net.Uri
 import android.os.Parcelable
 import io.trtc.tuikit.atomicx.albumpicker.AlbumPicker
+import io.trtc.tuikit.atomicx.albumpicker.AlbumPickerModel
 import io.trtc.tuikit.atomicx.albumpicker.AlbumPickerConfig
 import io.trtc.tuikit.atomicx.albumpicker.PickMode
+import io.trtc.tuikit.atomicx.albumpicker.PickMediaType
 import io.trtc.tuikit.atomicx.albumpicker.interfaces.AlbumPickerListener
 import kotlinx.parcelize.Parcelize
 
-interface VideoPickerListener {
-    fun onPicked(result: List<Pair<Uri, Boolean>>)
+data class VideoPickerModel(
+    var id: ULong,
+    val mediaPath: String? = null,
+    val mediaType: PickMediaType = PickMediaType.IMAGE,
+    val videoThumbnailPath: String? = null,
+    val isOrigin: Boolean = false
+)
 
-    fun onCanceled()
+interface VideoPickerListener {
+    fun onFinishedSelect(count: Int)
+    fun onProgress(model: VideoPickerModel, index: Int, progress: Double)
 }
 
 @Parcelize
@@ -31,12 +39,19 @@ object VideoPicker {
                 primaryColor = videoPickerConfig.primaryColor
             ),
             listener = object : AlbumPickerListener {
-                override fun onPicked(result: List<Pair<Uri, Boolean>>) {
-                    listener.onPicked(result)
+                override fun onFinishedSelect(count: Int) {
+                    listener.onFinishedSelect(count)
                 }
 
-                override fun onCanceled() {
-                    listener.onCanceled()
+                override fun onProgress(model: AlbumPickerModel, index: Int, progress: Double) {
+                    val videoModel = VideoPickerModel(
+                        id = model.id,
+                        mediaPath = model.mediaPath,
+                        mediaType = model.mediaType,
+                        videoThumbnailPath = model.videoThumbnailPath,
+                        isOrigin = model.isOrigin
+                    )
+                    listener.onProgress(videoModel, index, progress)
                 }
             })
     }

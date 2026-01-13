@@ -23,7 +23,6 @@ data class VideoRecorderConfig(
     var minDurationMs: Int? = null,
     var maxDurationMs: Int? = null,
     var isDefaultFrontCamera: Boolean? = null,
-    var primaryColor: String? = null,
     var isSupportEdit: Boolean? = null,
     var isSupportBeauty: Boolean? = null,
     var isSupportRecordScrollFilter: Boolean? = null,
@@ -46,7 +45,7 @@ enum class RecordMode(val value: Int) {
 interface VideoRecordListener {
     fun onPhotoCaptured(filePath: String?) {}
 
-    fun onVideoCaptured(filePath: String?, durationMs: Int) {}
+    fun onVideoCaptured(filePath: String?, durationMs: Int, thumbnailPath: String?) {}
 }
 
 enum class VideoQuality(val value: Int) {

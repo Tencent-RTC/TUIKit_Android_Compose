@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
+import io.trtc.tuikit.atomicx.basecomponent.utils.EventBus
 import io.trtc.tuikit.atomicx.basecomponent.utils.SetActivitySystemBarAppearance
 import io.trtc.tuikit.atomicx.chatsetting.ui.C2CChatSetting
 import io.trtc.tuikit.atomicx.chatsetting.ui.GroupChatSetting
@@ -43,7 +44,6 @@ import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
 import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
 import io.trtc.tuikit.chat.BaseActivity
 import io.trtc.tuikit.chat.Event
-import io.trtc.tuikit.chat.EventBus
 import io.trtc.tuikit.chat.chat.ChatActivity
 import io.trtc.tuikit.chat.widgets.AddFriendDialog
 

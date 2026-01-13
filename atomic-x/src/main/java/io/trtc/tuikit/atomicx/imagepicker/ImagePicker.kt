@@ -1,17 +1,16 @@
 package io.trtc.tuikit.atomicx.imagepicker
 
-import android.net.Uri
 import android.os.Parcelable
 import io.trtc.tuikit.atomicx.albumpicker.AlbumPicker
+import io.trtc.tuikit.atomicx.albumpicker.AlbumPickerModel
 import io.trtc.tuikit.atomicx.albumpicker.AlbumPickerConfig
 import io.trtc.tuikit.atomicx.albumpicker.PickMode
 import io.trtc.tuikit.atomicx.albumpicker.interfaces.AlbumPickerListener
 import kotlinx.parcelize.Parcelize
 
 interface ImagePickerListener {
-    fun onPicked(result: List<Pair<Uri, Boolean>>)
-
-    fun onCanceled()
+    fun onFinishedSelect(count: Int)
+    fun onProgress(model: AlbumPickerModel, index: Int, progress: Double)
 }
 
 @Parcelize
@@ -31,12 +30,12 @@ object ImagePicker {
                 primaryColor = imagePickerConfig.primaryColor
             ),
             listener = object : AlbumPickerListener {
-                override fun onPicked(result: List<Pair<Uri, Boolean>>) {
-                    listener.onPicked(result)
+                override fun onFinishedSelect(count: Int) {
+                    listener.onFinishedSelect(count)
                 }
 
-                override fun onCanceled() {
-                    listener.onCanceled()
+                override fun onProgress(model: AlbumPickerModel, index: Int, progress: Double) {
+                    listener.onProgress(model, index, progress)
                 }
             })
     }

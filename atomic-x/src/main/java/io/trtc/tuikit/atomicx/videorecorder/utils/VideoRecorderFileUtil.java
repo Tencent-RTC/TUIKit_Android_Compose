@@ -41,7 +41,7 @@ public class VideoRecorderFileUtil {
         BufferedReader br = null;
         try {
             if (isAssetFile) {
-                is = ServiceInitializer.getAppContext().getAssets()
+                is = VideoRecorderResourceUtils.getContext().getAssets()
                         .open(fileName.substring(VideoRecorderFileUtil.ASSET_FILE_PREFIX.length()));
             } else {
                 is = new FileInputStream(fileName);
@@ -68,7 +68,7 @@ public class VideoRecorderFileUtil {
         return sb.toString();
     }
 
-    public static String generateRecodeFilePath(TUIVideoRecodeFileType fileType) {
+    public static String generateRecodeFilePath(VideoRecodeFileType fileType) {
         String fileName = "";
         String suffix = "";
         switch (fileType) {
@@ -98,7 +98,7 @@ public class VideoRecorderFileUtil {
         }
     }
 
-    public enum TUIVideoRecodeFileType {
+    public enum VideoRecodeFileType {
         VIDEO_FILE,
         PICTURE_FILE
     }

@@ -44,6 +44,7 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.ActionSheet
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Avatar
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AvatarSize
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
+import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Switch
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.basecomponent.theme.ThemeMode
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
@@ -52,6 +53,7 @@ import io.trtc.tuikit.atomicxcore.api.login.LoginStore
 import io.trtc.tuikit.atomicxcore.api.login.UserProfile
 import io.trtc.tuikit.chat.login.LoginActivity
 import io.trtc.tuikit.chat.viewmodels.SettingsViewModel
+import io.trtc.tuikit.chat.viewmodels.TranslateLanguageOption
 import io.trtc.tuikit.chat.viewmodels.displayName
 
 @Composable
@@ -61,6 +63,8 @@ fun SettingsScreen() {
     var showSelfDetailDialog by remember { mutableStateOf(false) }
     val settingsViewModel: SettingsViewModel = viewModel()
     val userInfo by settingsViewModel.loginUserInfo.collectAsState()
+    val enableReadReceipt by settingsViewModel.enableReadReceipt.collectAsState()
+    val translateTargetLanguage by settingsViewModel.translateTargetLanguage.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -120,18 +124,11 @@ fun SettingsScreen() {
         var showFriendAddOpt by remember { mutableStateOf(false) }
         var showThemeSelector by remember { mutableStateOf(false) }
         var showLanguageSelector by remember { mutableStateOf(false) }
+        var showTranslateLanguageSelector by remember { mutableStateOf(false) }
 
         Column(
             modifier = Modifier.padding()
         ) {
-            SettingsItem(
-                title = stringResource(R.string.compose_demo_add_rule),
-                value = getFriendAddOptString(userInfo?.allowType),
-                showDivider = true,
-                onClick = {
-                    showFriendAddOpt = true
-                }
-            )
 
             SettingsItem(
                 title = stringResource(R.string.compose_demo_theme),
@@ -145,12 +142,40 @@ fun SettingsScreen() {
             SettingsItem(
                 title = stringResource(R.string.compose_demo_language),
                 value = stringResource(R.string.compose_demo_current_language),
-                showDivider = true,
+                showDivider = false,
                 onClick = {
                     showLanguageSelector = true
                 }
             )
+        }
 
+        Column(
+            modifier = Modifier.padding()
+        ) {
+            SettingsItem(
+                title = stringResource(R.string.compose_demo_add_rule),
+                value = getFriendAddOptString(userInfo?.allowType),
+                showDivider = true,
+                onClick = {
+                    showFriendAddOpt = true
+                }
+            )
+
+            ReadReceiptToggleItem(
+                enabled = enableReadReceipt,
+                onToggle = { newValue ->
+                    settingsViewModel.updateReadReceiptEnabled(newValue)
+                }
+            )
+
+            SettingsItem(
+                title = stringResource(R.string.compose_demo_translate_target_language),
+                value = settingsViewModel.getTranslateLanguageDisplayName(translateTargetLanguage),
+                showDivider = false,
+                onClick = {
+                    showTranslateLanguageSelector = true
+                }
+            )
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -241,6 +266,16 @@ fun SettingsScreen() {
             val viewModelStore = (activity as AppCompatActivity).viewModelStore
             viewModelStore.clear()
             activity.recreate()
+        }
+
+        ActionSheet(
+            showTranslateLanguageSelector,
+            options = settingsViewModel.translateLanguageOptions.map { option ->
+                ActionItem(text = option.name, value = option.code)
+            },
+            onDismiss = { showTranslateLanguageSelector = false }
+        ) {
+            settingsViewModel.updateTranslateTargetLanguage(it.value.toString())
         }
     }
 
@@ -333,5 +368,55 @@ fun getThemeString(themeScheme: ThemeMode): String {
         ThemeMode.SYSTEM -> stringResource(R.string.compose_demo_theme_system)
         ThemeMode.DARK -> stringResource(R.string.compose_demo_theme_dark)
         ThemeMode.LIGHT -> stringResource(R.string.compose_demo_theme_light)
+    }
+}
+
+@Composable
+fun ReadReceiptToggleItem(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    val colors = LocalTheme.current.colors
+    Column {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.compose_demo_message_read_receipt),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.W400,
+                    maxLines = 1,
+                    color = colors.textColorSecondary,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Switch(checked = enabled, onCheckedChange = onToggle)
+
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = getReadReceiptDescription(enabled),
+                fontSize = 12.sp,
+                color = colors.textColorSecondary,
+                lineHeight = 16.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun getReadReceiptDescription(enabled: Boolean): String {
+    return if (enabled) {
+        stringResource(R.string.compose_demo_message_read_receipt_enabled_desc)
+    } else {
+        stringResource(R.string.compose_demo_message_read_receipt_disabled_desc)
     }
 }

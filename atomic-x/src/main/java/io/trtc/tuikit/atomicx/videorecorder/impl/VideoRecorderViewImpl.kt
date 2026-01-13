@@ -3,6 +3,7 @@ package io.trtc.tuikit.atomicx.videorecorder.impl
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import io.trtc.tuikit.atomicx.basecomponent.theme.ThemeState
 import io.trtc.tuikit.atomicx.basecomponent.utils.ContextProvider
 import io.trtc.tuikit.atomicx.videorecorder.VideoRecordListener
 import io.trtc.tuikit.atomicx.videorecorder.RecordMode
@@ -41,6 +42,7 @@ class VideoRecorderViewImpl {
         videoRecodePermissionRequest(isPhotoOnly, object : PermissionCallback {
             override fun onGranted() {
                 VideoRecorderConfigInternal.getInstance().setConfig(config)
+                VideoRecorderConfigInternal.getInstance().setThemeColor(ThemeState.shared.currentPrimaryColor)
                 startRecordInternal(context, callback)
             }
 
@@ -49,7 +51,7 @@ class VideoRecorderViewImpl {
                 if (isPhotoOnly) {
                     callback.onPhotoCaptured(null)
                 } else {
-                    callback.onVideoCaptured(null, 0)
+                    callback.onVideoCaptured(null, 0, null)
                 }
             }
         })

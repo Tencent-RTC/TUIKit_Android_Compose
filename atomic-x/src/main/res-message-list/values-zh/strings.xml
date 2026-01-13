@@ -3,7 +3,7 @@
     <string name="message_list_menu_multi_select">多选</string>
     <string name="message_list_menu_quote">引用</string>
     <string name="message_list_menu_reply">回复</string>
-    <string name="message_list_menu_info">信息</string>
+    <string name="message_list_menu_info">详情</string>
     <string name="message_list_menu_forward">转发</string>
     <string name="message_list_menu_copy">复制</string>
     <string name="message_list_menu_recall">撤回</string>
@@ -42,6 +42,7 @@
     <string name="message_list_message_type_voice">[语音]</string>
     <string name="message_list_message_type_video">[视频]</string>
     <string name="message_list_message_type_file">[文件]</string>
+    <string name="message_list_message_type_merged">[聊天记录]</string>
     <string name="message_list_message_type_animate_emoji">[动画表情]</string>
     <string name="message_list_set_mute_all_format">%s 开启全员禁言</string>
     <string name="message_list_unmute_all_format">%s 取消全员禁言</string>
@@ -64,5 +65,41 @@
     <string name="message_list_day_hour_min_second">%1$d天%2$d小时%3$d分%4$d秒</string>
 
     <string name="messaeg_list_resend_tips">确定重发吗？</string>
+
+    <string name="message_list_multi_select_count">已选择 %d 个</string>
+    <string name="message_list_multi_select_forward">转发</string>
+    <string name="message_list_forward_button_text">转发(%d)</string>
+    <string name="message_list_select_conversation">选择会话</string>
+    <string name="message_list_selected_conversations">已选择 %d 个会话</string>
+    <string name="message_list_delete_messages_tips">确定删除已选消息？</string>
+    <string name="message_list_forward_by_merge">合并转发</string>
+    <string name="message_list_forward_by_separate">逐条转发</string>
+    <string name="message_list_forward_oneByOne_limit_number_tip">转发消息过多，暂不支持逐条转发</string>
+    <string name="message_list_forward_failed_tip">发送失败消息不支持转发！</string>
+    <string name="message_list_forward_chat_record">聊天记录</string>
+    <string name="message_list_forward_chats">群聊的聊天记录</string>
+    <string name="message_list_and_text">和</string>
+    <string name="message_list_forward_chats_c2c">的聊天记录</string>
+    <string name="message_list_recent_conversations">最近聊天</string>
+    <string name="message_list_forward_compatible_text">不支持合并转发消息，请升级到新版本。</string>
+    <string name="message_list_read_receipt_detail">已读回执</string>
+    <string name="message_list_read_receipt_read_by">已读</string>
+    <string name="message_list_read_receipt_delivered_to">未读</string>
+    <string name="message_list_loading_more">加载更多</string>
+
+    <string name="message_list_reaction_detail_title">表情回应</string>
+    <string name="message_list_reaction_tap_to_delete">点击删除</string>
+
+    <string name="message_list_menu_convert_to_text">转文字</string>
+    <string name="message_list_menu_hide">隐藏</string>
+    <string name="message_list_convert_to_text_failed">转换失败</string>
+    <string name="message_list_copied">已复制</string>
+
+    <string name="message_list_menu_translate">翻译</string>
+    <string name="message_list_translate_failed">翻译失败</string>
+    <string name="message_list_translate_default_tips">由腾讯云 IM 提供翻译支持</string>
+
+    <string name="message_list_violation_send_failed">涉及敏感内容，发送失败</string>
+    <string name="message_list_violation_received">涉及敏感内容</string>
 
 </resources>

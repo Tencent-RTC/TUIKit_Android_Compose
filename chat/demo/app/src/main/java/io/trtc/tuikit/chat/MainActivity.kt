@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
@@ -61,6 +62,7 @@ import io.trtc.tuikit.chat.chat.ChatActivity
 import io.trtc.tuikit.chat.login.LoginActivity
 import io.trtc.tuikit.chat.pages.ContactsPage
 import io.trtc.tuikit.chat.pages.ConversationsPage
+import io.trtc.tuikit.chat.search.SearchActivity
 import io.trtc.tuikit.chat.widgets.PageHeader
 import kotlinx.coroutines.flow.flowOf
 
@@ -237,16 +239,22 @@ class MainActivity : BaseActivity() {
 @Composable
 private fun MessagesScreen() {
     val activity = LocalActivity.current
+    val context = LocalContext.current
     var showAddChatSheet by remember { mutableStateOf(false) }
     var chatType by remember { mutableStateOf(ChatType.SINGLE) }
 
-    ConversationsPage(onConversationClick = {
-        activity?.startActivity(
-            Intent(activity, ChatActivity::class.java).apply {
-                putExtra("conversationID", it.conversationID)
-            }
-        )
-    }) {
+    ConversationsPage(
+        onConversationClick = {
+            activity?.startActivity(
+                Intent(activity, ChatActivity::class.java).apply {
+                    putExtra("conversationID", it.conversationID)
+                }
+            )
+        },
+        onSearchClick = {
+            SearchActivity.start(context)
+        }
+    ) {
         if (AppBuilderConfig.enableCreateConversation) {
             AddMoreButton(
                 menuItems = createChatMenuItems(
@@ -332,7 +340,7 @@ private fun SettingsScreenContent() {
     }
 }
 
-fun NavGraphBuilder.animatedComposable(
+private fun NavGraphBuilder.animatedComposable(
     route: String,
     content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit
 ) {

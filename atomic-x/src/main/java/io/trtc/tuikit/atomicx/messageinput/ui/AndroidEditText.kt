@@ -17,7 +17,6 @@ import android.widget.EditText
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -43,12 +42,32 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
+data class AtomicRange<T>(
+    val from: Int,
+    val to: Int,
+    val data: T
+) {
+    val length: Int get() = to - from
+
+    fun contains(position: Int) = position > from && position <= to
+
+    fun containsRange(start: Int, end: Int) = from <= start && to >= end
+
+    fun isWrappedBy(start: Int, end: Int) = (start > from && start < to) || (end > from && end < to)
+
+    fun getAnchorPosition(value: Int) = if ((value - from) - (to - value) >= 0) to else from
+}
+
 class AndroidEditTextState {
     internal var editTextView: EmojiEditTextView? = null
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     fun setText(text: String) {
         editTextView?.setText(text)
+        if (text.isNotEmpty()) {
+            editTextView?.setSelection(text.length)
+        }
+        editTextView?.atomicHelper?.clearAtomicRanges()
     }
 
     fun insertText(text: String) {
@@ -61,9 +80,48 @@ class AndroidEditTextState {
                     text +
                     currentText.substring(selectionEnd)
 
+            editText.atomicHelper.isPaused = true
             editText.setText(newText)
             editText.setSelection(selectionStart + text.length)
+            editText.atomicHelper.isPaused = false
+
+            val delta = text.length - (selectionEnd - selectionStart)
+            editText.atomicHelper.updateRangesOffset(selectionStart, delta)
         }
+    }
+
+    fun <T> insertAtomicText(text: String, data: T) {
+        editTextView?.let { editText ->
+            val selectionStart = editText.selectionStart
+            val selectionEnd = editText.selectionEnd
+            val currentText = editText.text.toString()
+
+            val newText = currentText.substring(0, selectionStart) +
+                    text +
+                    currentText.substring(selectionEnd)
+
+            val atomicFrom = selectionStart
+            val atomicTo = selectionStart + text.length
+
+            editText.atomicHelper.isPaused = true
+            editText.setText(newText)
+            editText.setSelection(atomicTo)
+            editText.atomicHelper.isPaused = false
+
+            val delta = text.length - (selectionEnd - selectionStart)
+            editText.atomicHelper.updateRangesOffset(selectionStart, delta)
+
+            editText.atomicHelper.addAtomicRange(atomicFrom, atomicTo, data)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getAtomicRanges(): List<AtomicRange<T>> {
+        return editTextView?.atomicHelper?.getAtomicRanges() as? List<AtomicRange<T>> ?: emptyList()
+    }
+
+    fun clearAtomicRanges() {
+        editTextView?.atomicHelper?.clearAtomicRanges()
     }
 
     fun getText(): String {
@@ -97,17 +155,34 @@ class AndroidEditTextState {
         editTextView?.deleteAtCursor()
     }
 
+    fun deleteCharBeforeCursor() {
+        editTextView?.let { editText ->
+            val text = editText.text?.toString() ?: return
+            val selectionStart = editText.selectionStart
+            if (selectionStart > 0 && text.isNotEmpty()) {
+                val newText = text.substring(0, selectionStart - 1) + text.substring(selectionStart)
+
+                editText.atomicHelper.isPaused = true
+                editText.setText(newText)
+                editText.setSelection(selectionStart - 1)
+                editText.atomicHelper.isPaused = false
+
+                editText.atomicHelper.updateRangesOffset(selectionStart - 1, -1)
+            }
+        }
+    }
+
     fun hideKeyboardKeepFocus() {
         editTextView?.let { editText ->
             val imm = editText.context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
             imm?.hideSoftInputFromWindow(editText.windowToken, 0)
         }
     }
-}
 
-@Composable
-fun rememberAndroidEditTextState(): AndroidEditTextState {
-    return remember { AndroidEditTextState() }
+    fun dispose() {
+        editTextView?.atomicHelper?.clearAtomicRanges()
+        editTextView = null
+    }
 }
 
 @Composable
@@ -160,6 +235,7 @@ class EmojiEditTextView @JvmOverloads constructor(
 ) : AppCompatEditText(context, attrs, defStyleAttr) {
 
     internal val emojiHelper = EmojiHelper(context)
+    internal val atomicHelper = AtomicSpanHelper()
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     init {
@@ -231,6 +307,7 @@ class EmojiEditTextView @JvmOverloads constructor(
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 emojiHelper.updateEmojiRanges(this@EmojiEditTextView)
+                atomicHelper.onTextChanged(start, before, count)
             }
 
             override fun afterTextChanged(s: Editable?) {
@@ -333,7 +410,8 @@ class EmojiEditTextView @JvmOverloads constructor(
 
     override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
         val originalConnection = super.onCreateInputConnection(outAttrs)
-        val emojiConnection = emojiHelper.createEmojiInputConnection(originalConnection, this)
+        val atomicConnection = atomicHelper.createAtomicInputConnection(originalConnection, this)
+        val emojiConnection = emojiHelper.createEmojiInputConnection(atomicConnection, this)
         return MultiLineInputConnection(emojiConnection, this)
     }
 
@@ -341,6 +419,7 @@ class EmojiEditTextView @JvmOverloads constructor(
         super.onSelectionChanged(selStart, selEnd)
         try {
             emojiHelper.onSelectionChanged(selStart, selEnd, this)
+            atomicHelper.onSelectionChanged(selStart, selEnd, this)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -349,6 +428,7 @@ class EmojiEditTextView @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         emojiHelper.cleanup()
+        atomicHelper.clearAtomicRanges()
     }
 
     private inner class MultiLineInputConnection(
@@ -673,4 +753,179 @@ private fun createThinCursorDrawable(context: Context, color: Int): Drawable {
     val cursorWidth = (1.5f * density).toInt()
     drawable.setSize(cursorWidth, 0)
     return drawable
+}
+
+internal class AtomicSpanHelper {
+    private val atomicRanges = mutableListOf<AtomicRange<Any>>()
+    private var isAtomicSelected = false
+    private var lastSelectedRange: AtomicRange<Any>? = null
+
+    var isPaused = false
+
+    fun <T> addAtomicRange(from: Int, to: Int, data: T) {
+        atomicRanges.add(AtomicRange(from, to, data as Any))
+        atomicRanges.sortBy { it.from }
+    }
+
+    fun getAtomicRanges(): List<AtomicRange<Any>> = atomicRanges.toList()
+
+    fun clearAtomicRanges() {
+        atomicRanges.clear()
+        isAtomicSelected = false
+        lastSelectedRange = null
+    }
+
+    fun updateRangesOffset(position: Int, delta: Int) {
+        if (atomicRanges.isEmpty() || delta == 0) return
+
+        val toRemove = mutableListOf<AtomicRange<Any>>()
+        val toUpdate = mutableListOf<Pair<Int, AtomicRange<Any>>>()
+
+        atomicRanges.forEachIndexed { index, range ->
+            when {
+                position >= range.to -> {}
+                position <= range.from -> {
+                    val newFrom = range.from + delta
+                    val newTo = range.to + delta
+                    if (newFrom >= 0) {
+                        toUpdate.add(index to range.copy(from = newFrom, to = newTo))
+                    } else {
+                        toRemove.add(range)
+                    }
+                }
+
+                else -> {
+                    toRemove.add(range)
+                }
+            }
+        }
+
+        toUpdate.forEach { (index, newRange) ->
+            if (index < atomicRanges.size) {
+                atomicRanges[index] = newRange
+            }
+        }
+        atomicRanges.removeAll(toRemove)
+    }
+
+    fun createAtomicInputConnection(target: InputConnection?, editText: EditText): InputConnection {
+        return AtomicInputConnection(target, editText)
+    }
+
+    fun onSelectionChanged(selStart: Int, selEnd: Int, editText: EditText) {
+        if (selStart < 0 || selEnd < 0) return
+        val textLength = editText.text?.length ?: return
+        if (selStart > textLength || selEnd > textLength) return
+
+        if (lastSelectedRange != null &&
+            (lastSelectedRange!!.from == selStart && lastSelectedRange!!.to == selEnd ||
+                    lastSelectedRange!!.from == selEnd && lastSelectedRange!!.to == selStart)
+        ) {
+            return
+        }
+
+        val closestRange = atomicRanges.find { it.containsRange(selStart, selEnd) }
+        if (closestRange?.to == selEnd) {
+            isAtomicSelected = false
+        }
+
+        val nearbyRange = atomicRanges.find { it.isWrappedBy(selStart, selEnd) } ?: return
+
+        try {
+            if (selStart == selEnd) {
+                val anchorPosition = nearbyRange.getAnchorPosition(selStart)
+                if (anchorPosition in 0..textLength) {
+                    editText.setSelection(anchorPosition)
+                }
+            } else {
+                if (selEnd < nearbyRange.to && nearbyRange.to <= textLength) {
+                    editText.setSelection(selStart, nearbyRange.to)
+                }
+                if (selStart > nearbyRange.from && nearbyRange.from >= 0) {
+                    editText.setSelection(nearbyRange.from, selEnd)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun onTextChanged(start: Int, before: Int, count: Int) {
+        if (isPaused || atomicRanges.isEmpty()) return
+
+        val delta = count - before
+        val deleteEnd = start + before
+
+        val toRemove = mutableListOf<AtomicRange<Any>>()
+        val toUpdate = mutableListOf<Pair<Int, AtomicRange<Any>>>()
+
+        atomicRanges.forEachIndexed { index, range ->
+            when {
+                start >= range.to -> {
+                    // do nothing
+                }
+
+                deleteEnd <= range.from -> {
+                    if (delta != 0) {
+                        val newFrom = range.from + delta
+                        val newTo = range.to + delta
+                        if (newFrom >= 0) {
+                            toUpdate.add(index to range.copy(from = newFrom, to = newTo))
+                        } else {
+                            toRemove.add(range)
+                        }
+                    }
+                }
+
+                else -> {
+                    toRemove.add(range)
+                }
+            }
+        }
+
+        toUpdate.forEach { (index, newRange) ->
+            if (index < atomicRanges.size) {
+                atomicRanges[index] = newRange
+            }
+        }
+        atomicRanges.removeAll(toRemove)
+    }
+
+    private inner class AtomicInputConnection(
+        target: InputConnection?,
+        private val editText: EditText
+    ) : InputConnectionWrapper(target, true) {
+
+        override fun sendKeyEvent(event: KeyEvent): Boolean {
+            if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_DEL) {
+                val selectionStart = editText.selectionStart
+                val selectionEnd = editText.selectionEnd
+                val closestRange = atomicRanges.find { it.containsRange(selectionStart, selectionEnd) }
+
+                if (closestRange == null) {
+                    isAtomicSelected = false
+                    return super.sendKeyEvent(event)
+                }
+
+                if (isAtomicSelected || selectionStart == closestRange.from) {
+                    isAtomicSelected = false
+                    return super.sendKeyEvent(event)
+                } else {
+                    isAtomicSelected = true
+                    lastSelectedRange = closestRange
+                    editText.setSelection(closestRange.to, closestRange.from)
+                    return sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL))
+                }
+            }
+            return super.sendKeyEvent(event)
+        }
+
+        override fun deleteSurroundingText(beforeLength: Int, afterLength: Int): Boolean {
+            if (beforeLength == 1 && afterLength == 0) {
+                return sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL)) &&
+                        sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DEL))
+            }
+            return super.deleteSurroundingText(beforeLength, afterLength)
+        }
+    }
 }

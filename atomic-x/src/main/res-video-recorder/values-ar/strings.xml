@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="video_recorder_empty"></string>
+    <string name="video_recorder_empty">""</string>
     <string name="video_recorder_torch">الشعلة</string>
     <string name="video_recorder_aspect">النسبة</string>
     <string name="video_recorder_beauty">الجمال</string>

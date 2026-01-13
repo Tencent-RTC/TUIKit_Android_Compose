@@ -60,13 +60,13 @@ import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AvatarContent
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.conversationlist.config.ChatConversationActionConfig
 import io.trtc.tuikit.atomicx.conversationlist.config.ConversationActionConfigProtocol
-import io.trtc.tuikit.atomicx.conversationlist.model.ConversationActionType
 import io.trtc.tuikit.atomicx.conversationlist.model.ConversationCustomAction
+import io.trtc.tuikit.atomicx.conversationlist.utils.isUnread
 import io.trtc.tuikit.atomicx.conversationlist.viewmodels.ConversationListViewModel
 import io.trtc.tuikit.atomicx.conversationlist.viewmodels.ConversationListViewModelFactory
+import io.trtc.tuikit.atomicxcore.api.contact.ReceiveMessageOpt
 import io.trtc.tuikit.atomicxcore.api.conversation.ConversationInfo
 import io.trtc.tuikit.atomicxcore.api.conversation.ConversationListStore
-import io.trtc.tuikit.atomicxcore.api.conversation.ConversationReceiveOption
 import kotlin.math.roundToInt
 
 val LocalViewModel = compositionLocalOf<ConversationListViewModel> { error("No ViewModel provided") }
@@ -80,10 +80,11 @@ val LocalCustomActions = compositionLocalOf<List<ConversationCustomAction>> { em
 @Composable
 fun ConversationList(
     modifier: Modifier = Modifier,
-    conversationListViewModelFactory: ConversationListViewModelFactory = ConversationListViewModelFactory(
-        ConversationListStore.create()
-    ),
     config: ConversationActionConfigProtocol = ChatConversationActionConfig(),
+    conversationListViewModelFactory: ConversationListViewModelFactory = ConversationListViewModelFactory(
+        conversationListStore = ConversationListStore.create(),
+        conversationActionConfig = config
+    ),
     customActions: List<ConversationCustomAction> = emptyList(),
     onConversationClick: (ConversationInfo) -> Unit = {},
 ) {
@@ -93,7 +94,7 @@ fun ConversationList(
     val conversationListViewModel =
         viewModel(ConversationListViewModel::class, factory = conversationListViewModelFactory)
 
-    val conversationList = conversationListViewModel.conversationList
+    val conversationList by conversationListViewModel.conversationList.collectAsState()
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = 0)
     val currentSwipedItem = remember { mutableStateOf<String?>(null) }
 
@@ -160,21 +161,11 @@ fun ConversationList(
                         modifier = Modifier.animateItem(),
                         conversationInfo = conversation,
                         onClick = onConversationClick,
-                        onReadClick = {
-                            if (conversation.unreadCount > 0) {
-                                conversationListViewModel.setConversationAction(
-                                    conversation,
-                                    ConversationActionType.CLEAR_UNREAD_COUNT
-                                )
-                                conversationListViewModel.setConversationAction(
-                                    conversation,
-                                    ConversationActionType.MARK_READ
-                                )
+                        onReadStatusToggled = {
+                            if (conversation.isUnread) {
+                                conversationListViewModel.clearUnreadCount(conversation)
                             } else {
-                                conversationListViewModel.setConversationAction(
-                                    conversation,
-                                    ConversationActionType.MARK_UNREAD
-                                )
+                                conversationListViewModel.markAsUnRead(conversation)
                             }
                         },
                         onMoreClick = { isShowMenu = true; currentClickItem = it },
@@ -185,20 +176,16 @@ fun ConversationList(
 
             if (isShowMenu) {
                 val menuActions =
-                    conversationListViewModel.getActions(conversationInfo = currentClickItem!!, config = config)
+                    conversationListViewModel.getActions(conversationInfo = currentClickItem!!)
                 if (!menuActions.isEmpty() || !customActions.isEmpty()) {
                     val actionMap = mutableMapOf<ActionItem, () -> Unit>()
                     val options = menuActions.map { menuAction ->
                         ActionItem(
                             text = stringResource(menuAction.titleResID),
                             isDestructive = menuAction.dangerous,
-                            value = menuAction.type
                         ).also { item ->
                             actionMap[item] = {
-                                conversationListViewModel.setConversationAction(
-                                    currentClickItem!!,
-                                    menuAction.type
-                                )
+                                menuAction.action(currentClickItem!!)
                             }
                         }
                     } + customActions.map {
@@ -229,7 +216,7 @@ fun SwipeConversationItem(
     conversationInfo: ConversationInfo,
     onClick: (ConversationInfo) -> Unit,
     modifier: Modifier = Modifier,
-    onReadClick: (ConversationInfo) -> Unit = {},
+    onReadStatusToggled: (ConversationInfo) -> Unit = {},
     onMoreClick: (ConversationInfo) -> Unit = {},
     currentSwipedItem: MutableState<String?> = mutableStateOf(null)
 ) {
@@ -238,16 +225,15 @@ fun SwipeConversationItem(
     val colors = LocalTheme.current.colors
     val density = LocalDensity.current
     val itemId = conversationInfo.conversationID ?: ""
-    val hasUnreadCount = conversationInfo.unreadCount > 0
+    val isUnread = conversationInfo.isUnread
     val showActions =
         customActions.isNotEmpty() || config.isSupportPin || config.isSupportClearHistory || config.isSupportDelete || config.isSupportMute
 
     var offsetX by remember { mutableFloatStateOf(0f) }
     val swipeItemWidth = with(density) { 68.dp.toPx() }
     val swipeThreshold =
-        if (hasUnreadCount && showActions) swipeItemWidth * 2
-        else if (hasUnreadCount || showActions) swipeItemWidth
-        else 0f
+        if (showActions) swipeItemWidth * 2
+        else swipeItemWidth
     var targetOffsetX by remember { mutableFloatStateOf(0f) }
 
     val animatedOffsetX by animateFloatAsState(
@@ -315,36 +301,34 @@ fun SwipeConversationItem(
                     )
                 }
             }
-            if (hasUnreadCount) {
-                Column(
-                    modifier = Modifier
-                        .width(68.dp)
-                        .background(color = if (hasUnreadCount) colors.textColorLink else colors.textColorTertiary)
-                        .padding(horizontal = 8.dp)
-                        .fillMaxHeight()
-                        .clickable {
-                            currentSwipedItem.value = null
-                            onReadClick(conversationInfo)
-                        },
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        modifier = Modifier.size(18.dp),
-                        painter = painterResource(if (hasUnreadCount) R.drawable.conversation_list_mark_read_icon else R.drawable.conversation_list_mark_unread_icon),
-                        contentDescription = "Read",
-                        tint = colors.textColorButton,
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = if (hasUnreadCount) stringResource(R.string.conversation_list_mark_read) else stringResource(
-                            R.string.conversation_list_mark_unread
-                        ),
-                        fontSize = 12.sp,
-                        color = colors.textColorButton,
-                        fontWeight = FontWeight.W400
-                    )
-                }
+            Column(
+                modifier = Modifier
+                    .width(68.dp)
+                    .background(color = if (isUnread) colors.textColorLink else colors.textColorTertiary)
+                    .padding(horizontal = 8.dp)
+                    .fillMaxHeight()
+                    .clickable {
+                        currentSwipedItem.value = null
+                        onReadStatusToggled(conversationInfo)
+                    },
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    modifier = Modifier.size(18.dp),
+                    painter = painterResource(if (isUnread) R.drawable.conversation_list_mark_read_icon else R.drawable.conversation_list_mark_unread_icon),
+                    contentDescription = "Read",
+                    tint = colors.textColorButton,
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = if (isUnread) stringResource(R.string.conversation_list_mark_read) else stringResource(
+                        R.string.conversation_list_mark_unread
+                    ),
+                    fontSize = 12.sp,
+                    color = colors.textColorButton,
+                    fontWeight = FontWeight.W400
+                )
             }
         }
 
@@ -398,7 +382,7 @@ fun ConversationItem(
     val multiSelect = LocalIsMultiSelect.current
     val viewModel = LocalViewModel.current
     val selectedConversations by LocalViewModel.current.selectedConversations.collectAsState()
-    val isReceiveMessage = conversationInfo.receiveOption == ConversationReceiveOption.RECEIVE
+    val isReceiveMessage = conversationInfo.receiveOption == ReceiveMessageOpt.RECEIVE
     val onClick = {
         if (multiSelect) {
             if (selectedConversations.contains(conversationInfo)) {
@@ -433,7 +417,7 @@ fun ConversationItem(
                     url = conversationInfo.avatarURL,
                     fallbackName = conversationInfo.title ?: conversationInfo.conversationID
                 ),
-                badge = if (!isReceiveMessage && conversationInfo.unreadCount > 0) AvatarBadge.Dot else AvatarBadge.None,
+                badge = if (!isReceiveMessage && conversationInfo.isUnread) AvatarBadge.Dot else AvatarBadge.None,
             ) {
                 onClick()
             }

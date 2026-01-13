@@ -19,7 +19,7 @@ import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecorderRecordCore;
 import io.trtc.tuikit.atomicx.videorecorder.core.VideoRecordCoreConstant;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderData.VideoRecorderDataObserver;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderFileUtil;
-import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderFileUtil.TUIVideoRecodeFileType;
+import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderFileUtil.VideoRecodeFileType;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderResourceUtils;
 import io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderAuthorizationPrompter;
 import io.trtc.tuikit.atomicx.videorecorder.view.VideoRecorderAuthorizationPrompter.PrompterType;
@@ -58,7 +58,7 @@ public class RecordOperationView extends LinearLayout {
                     if (VideoRecorderConfigInternal.getInstance().getRecordMode() == RecordMode.MIXED
                             && mRecordCore.isUGCRecorderCore()) {
                         mRecordCore.takePhoto(
-                                VideoRecorderFileUtil.generateRecodeFilePath(TUIVideoRecodeFileType.PICTURE_FILE));
+                                VideoRecorderFileUtil.generateRecodeFilePath(VideoRecodeFileType.PICTURE_FILE));
                     } else {
                         Toast.makeText(mContext, R.string.video_recorder_recode_time_short_tips, Toast.LENGTH_SHORT).show();
                     }
@@ -137,7 +137,7 @@ public class RecordOperationView extends LinearLayout {
     private void initRecordButtonForMixedRecode() {
         mRecordButtonView.setOnLongClickListener(v -> {
             int result = mRecordCore.startRecord(
-                    VideoRecorderFileUtil.generateRecodeFilePath(TUIVideoRecodeFileType.VIDEO_FILE));
+                    VideoRecorderFileUtil.generateRecodeFilePath(VideoRecodeFileType.VIDEO_FILE));
 
             if (result == VideoRecordCoreConstant.START_RECORD_ERR_LICENCE_VERIFICATION_FAILED) {
                 VideoRecorderAuthorizationPrompter.showPermissionPrompterDialog(mContext,  PrompterType.NO_SIGNATURE);
@@ -156,7 +156,7 @@ public class RecordOperationView extends LinearLayout {
         mRecordButtonView.setOnClickListener(
                 v -> {
                     int result = mRecordCore.takePhoto(
-                            VideoRecorderFileUtil.generateRecodeFilePath(TUIVideoRecodeFileType.PICTURE_FILE));
+                            VideoRecorderFileUtil.generateRecodeFilePath(VideoRecodeFileType.PICTURE_FILE));
 
                     if (result == VideoRecordCoreConstant.START_RECORD_ERR_LICENCE_VERIFICATION_FAILED) {
                         VideoRecorderAuthorizationPrompter.showPermissionPrompterDialog(mContext, PrompterType.NO_SIGNATURE);
@@ -171,7 +171,7 @@ public class RecordOperationView extends LinearLayout {
         mRecordButtonView.setOnLongClickListener(v -> {
             mRecordTimeTextView.setVisibility(VISIBLE);
             int result = mRecordCore.startRecord(
-                    VideoRecorderFileUtil.generateRecodeFilePath(TUIVideoRecodeFileType.VIDEO_FILE));
+                    VideoRecorderFileUtil.generateRecodeFilePath(VideoRecodeFileType.VIDEO_FILE));
 
             if (result == VideoRecordCoreConstant.START_RECORD_ERR_LICENCE_VERIFICATION_FAILED) {
                 VideoRecorderAuthorizationPrompter.showPermissionPrompterDialog(mContext, PrompterType.NO_SIGNATURE);
@@ -203,7 +203,7 @@ public class RecordOperationView extends LinearLayout {
         mRecordButtonView.setOnClickListener(
                 v -> {
                     int result = mRecordCore.takePhoto(
-                            VideoRecorderFileUtil.generateRecodeFilePath(TUIVideoRecodeFileType.PICTURE_FILE));
+                            VideoRecorderFileUtil.generateRecodeFilePath(VideoRecodeFileType.PICTURE_FILE));
 
                     if (result == VideoRecordCoreConstant.START_RECORD_ERR_LICENCE_VERIFICATION_FAILED) {
                         VideoRecorderAuthorizationPrompter.showPermissionPrompterDialog(mContext, PrompterType.NO_SIGNATURE);

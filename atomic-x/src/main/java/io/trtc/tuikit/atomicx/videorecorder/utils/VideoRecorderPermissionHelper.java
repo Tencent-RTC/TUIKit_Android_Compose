@@ -7,6 +7,7 @@ import androidx.annotation.IntDef;
 import com.tencent.qcloud.tuicore.ServiceInitializer;
 import com.tencent.qcloud.tuicore.util.PermissionRequester;
 import io.trtc.tuikit.atomicx.R;
+import io.trtc.tuikit.atomicx.basecomponent.utils.ContextProvider;
 
 public class VideoRecorderPermissionHelper {
     public static final int PERMISSION_MICROPHONE = 1;
@@ -21,9 +22,9 @@ public class VideoRecorderPermissionHelper {
         String reason = null;
         String reasonTitle = null;
         String deniedAlert = null;
-        ApplicationInfo applicationInfo = ServiceInitializer.getAppContext().getApplicationInfo();
+        ApplicationInfo applicationInfo = ContextProvider.getAppContext().getApplicationInfo();
         int permissionIcon = 0;
-        CharSequence labelCharSequence = applicationInfo.loadLabel(ServiceInitializer.getAppContext().getPackageManager());
+        CharSequence labelCharSequence = applicationInfo.loadLabel(ContextProvider.getAppContext().getPackageManager());
         String appName = "App";
         if (!TextUtils.isEmpty(labelCharSequence)) {
             appName = labelCharSequence.toString();

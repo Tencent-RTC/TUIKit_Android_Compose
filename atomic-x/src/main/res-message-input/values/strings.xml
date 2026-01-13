@@ -14,6 +14,8 @@
     <string name="message_input_recording_time_exceeded">Recording time exceeded</string>
     <string name="message_input_recording_status">Recording...</string>
     <string name="message_input_send_failed">Send failed</string>
-
+    <string name="message_input_mention_all">All</string>
+    <string name="message_input_mention_select_member">Select Member</string>
+    <string name="message_input_back">Back</string>
 
 </resources>

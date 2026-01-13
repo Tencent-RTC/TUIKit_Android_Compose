@@ -1,6 +1,6 @@
 <resources>
     <string name="message_list_menu_more">More</string>
-    <string name="message_list_menu_multi_select">Multi-Select</string>
+    <string name="message_list_menu_multi_select">Select</string>
     <string name="message_list_menu_quote">Quote</string>
     <string name="message_list_menu_reply">Reply</string>
     <string name="message_list_menu_info">Info</string>
@@ -42,6 +42,7 @@
     <string name="message_list_message_type_voice">[Voice]</string>
     <string name="message_list_message_type_video">[Video]</string>
     <string name="message_list_message_type_file">[File]</string>
+    <string name="message_list_message_type_merged">[Chat History]</string>
     <string name="message_list_message_type_animate_emoji">[Animated Sticker]</string>
     <string name="message_list_set_mute_all_format">%s enabled Mute All</string>
     <string name="message_list_unmute_all_format">%s disabled Mute All</string>
@@ -66,5 +67,41 @@
     <string name="message_list_day_hour_min_second">%1$d d %2$d h %3$d min %4$d s</string>
 
     <string name="messaeg_list_resend_tips">Are you sure you want to resend?</string>
+
+    <string name="message_list_multi_select_count">%d selected</string>
+    <string name="message_list_multi_select_forward">Forward</string>
+    <string name="message_list_forward_button_text">Forward(%d)</string>
+    <string name="message_list_select_conversation">Select Conversation</string>
+    <string name="message_list_selected_conversations">%d conversation(s) selected</string>
+    <string name="message_list_delete_messages_tips">Are you sure you want to delete the selected messages?</string>
+    <string name="message_list_forward_by_merge">Forward as Combined Message</string>
+    <string name="message_list_forward_by_separate">Forward Individually</string>
+    <string name="message_list_forward_oneByOne_limit_number_tip">Too many messages selected, individual forwarding is not supported</string>
+    <string name="message_list_forward_failed_tip">Failed messages cannot be forwarded!</string>
+    <string name="message_list_forward_chat_record">Chat History</string>
+    <string name="message_list_forward_chats">Group Chat History</string>
+    <string name="message_list_and_text">and</string>
+    <string name="message_list_forward_chats_c2c">\'s Chat History</string>
+    <string name="message_list_recent_conversations">Recent Chats</string>
+    <string name="message_list_forward_compatible_text">Combined message forwarding is not supported. Please upgrade to the latest version.</string>
+    <string name="message_list_read_receipt_detail">Read Receipt</string>
+    <string name="message_list_read_receipt_read_by">Read By</string>
+    <string name="message_list_read_receipt_delivered_to">Delivered To</string>
+    <string name="message_list_loading_more">Loading more</string>
+
+    <string name="message_list_reaction_detail_title">Reactions</string>
+    <string name="message_list_reaction_tap_to_delete">Tap to remove</string>
+
+    <string name="message_list_menu_convert_to_text">Convert to Text</string>
+    <string name="message_list_menu_hide">Hide</string>
+    <string name="message_list_convert_to_text_failed">Unable to convert</string>
+    <string name="message_list_copied">Copied</string>
+
+    <string name="message_list_menu_translate">Translate</string>
+    <string name="message_list_translate_failed">Unable to translate</string>
+    <string name="message_list_translate_default_tips">Translation powered by Tencent Cloud IM</string>
+
+    <string name="message_list_violation_send_failed">Contains sensitive content, failed to send</string>
+    <string name="message_list_violation_received">Contains sensitive content</string>
 
 </resources>

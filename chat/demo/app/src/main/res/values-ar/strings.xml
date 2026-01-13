@@ -9,10 +9,6 @@
     <string name="compose_demo_logout">تسجيل الخروج</string>
     <string name="compose_demo_language">اللغة</string>
     <string name="compose_demo_theme">السمة</string>
-    <string name="compose_demo_zh_hans">الصينية المبسطة</string>
-    <string name="compose_demo_en">إنجليزي</string>
-    <string name="compose_demo_ar">عربي</string>
-    <string name="compose_demo_zh_hant">الصينية التقليدية</string>
     <string name="compose_demo_current_language">عربي</string>
     <string name="compose_demo_about_sdk_version">إصدار SDK</string>
     <string name="compose_demo_about_im">حول</string>
@@ -42,4 +38,9 @@
     <string name="compose_demo_self_detail_edit_nickname_placeholder">يرجى إدخال الاسم المستعار</string>
     <string name="compose_demo_self_detail_edit_status_title">تعيين الحالة</string>
     <string name="compose_demo_self_detail_edit_status_placeholder">ما الذي تفكر فيه الآن</string>
+    <string name="compose_demo_style">مظهر</string>
+    <string name="compose_demo_message_read_receipt">حالة قراءة الرسالة</string>
+    <string name="compose_demo_message_read_receipt_enabled_desc">عند الإغلاق، لن تظهر حالة قراءة الرسائل في الرسائل التي تستلمها أو ترسلها، ولن تتمكن من معرفة ما إذا قرأ الطرف الآخر الرسالة أم لا، وبالمثل، الطرف الآخر لن يتمكن من معرفة ما إذا قرأت الرسالة أم لا.</string>
+    <string name="compose_demo_message_read_receipt_disabled_desc">عند الفتح، ستظهر حالة قراءة الرسائل في الرسائل التي تستلمها أو ترسلها في المحادثات الجماعية، ويمكنك رؤية ما إذا قرأ الطرف الآخر الرسالة أم لا. إذا قام أصدقاؤك في المحادثات الفردية بتفعيل حالة قراءة الرسائل، ستظهر حالة قراءة الرسائل في المحادثات الفردية التي تتبادلها معهم.</string>
+    <string name="compose_demo_translate_target_language">الترجمة إلى</string>
 </resources>

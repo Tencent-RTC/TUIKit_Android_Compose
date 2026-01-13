@@ -7,15 +7,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import io.trtc.tuikit.atomicx.basecomponent.utils.SetActivitySystemBarAppearance
+import io.trtc.tuikit.atomicx.basecomponent.utils.onEvent
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
 import io.trtc.tuikit.atomicxcore.api.contact.ContactInfo
 import io.trtc.tuikit.atomicxcore.api.contact.ContactListStore
 import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 import io.trtc.tuikit.chat.BaseActivity
 import io.trtc.tuikit.chat.Event
-import io.trtc.tuikit.chat.EventBus
 import io.trtc.tuikit.chat.chatsetting.ChatSettingActivity
-import io.trtc.tuikit.chat.collectOn
 import io.trtc.tuikit.chat.pages.ChatPage
 import io.trtc.tuikit.chat.widgets.AddFriendDialog
 
@@ -32,12 +31,12 @@ class ChatActivity : BaseActivity() {
             return
         }
 
-        EventBus.collectOn<Event.GroupDeleted>(this) {
+        onEvent<Event.GroupDeleted> {
             if ("group_${it.groupID}" == conversationID) {
                 finish()
             }
         }
-        EventBus.collectOn<Event.ContactDeleted>(this) {
+        onEvent<Event.ContactDeleted> {
             if ("c2c_${it.contactID}" == conversationID) {
                 finish()
             }

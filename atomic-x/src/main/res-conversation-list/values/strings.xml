@@ -7,5 +7,8 @@
     <string name="conversation_list_mark_unread">Mark as unread</string>
     <string name="conversation_list_mark_read">Mark as read</string>
     <string name="conversation_list_message_count_unit">messages</string>
+    <string name="conversation_list_draft_prefix">[Draft]</string>
+    <string name="conversation_list_at_all_prefix">[@All]</string>
+    <string name="conversation_list_at_me_prefix">[@Me]</string>
 
 </resources>

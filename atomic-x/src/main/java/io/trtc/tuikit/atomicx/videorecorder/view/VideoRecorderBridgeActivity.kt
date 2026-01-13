@@ -10,6 +10,7 @@ import io.trtc.tuikit.atomicx.videorecorder.RecordMode
 import io.trtc.tuikit.atomicx.videorecorder.VideoRecordListener
 import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConfigInternal
 import io.trtc.tuikit.atomicx.videorecorder.config.VideoRecorderConstants
+import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderFileUtil
 
 class VideoRecorderBridgeActivity : ComponentActivity() {
     companion object {
@@ -42,11 +43,11 @@ class VideoRecorderBridgeActivity : ComponentActivity() {
             if (VideoRecorderConfigInternal.getInstance().getRecordMode() == RecordMode.PHOTO_ONLY) {
                 callback?.onPhotoCaptured(null)
             } else {
-                callback?.onVideoCaptured(null, 0)
+                callback?.onVideoCaptured(null, 0, null)
             }
         } else {
             if (recordResult.type == VideoRecorderConstants.RECORD_TYPE_VIDEO) {
-                callback?.onVideoCaptured(finalPath, recordResult.duration)
+                callback?.onVideoCaptured(finalPath, recordResult.duration, getVideoThumbnailPath(finalPath))
             } else {
                 callback?.onPhotoCaptured(finalPath)
             }
@@ -72,4 +73,26 @@ class VideoRecorderBridgeActivity : ComponentActivity() {
         recordeResult.duration = resultBundle.getInt(VideoRecorderConstants.RESULT_NAME_RECORD_DURATION)
         return recordeResult
     }
-} 
+
+    fun getVideoThumbnailPath(path: String?): String? {
+        if (path == null) {
+            return null;
+        }
+
+        return try {
+            val retriever = android.media.MediaMetadataRetriever()
+            retriever.setDataSource(path)
+            val bitmap = retriever.frameAtTime
+            retriever.release()
+            if (bitmap == null) return null
+            var file = VideoRecorderFileUtil.generateRecodeFilePath(VideoRecorderFileUtil.VideoRecodeFileType.PICTURE_FILE)
+            java.io.FileOutputStream(file).use { out ->
+                bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, out)
+            }
+            file.toString()
+        } catch (e: Exception) {
+            Log.e(TAG, "getVideoThumbnailPath failed", e)
+            null
+        }
+    }
+}

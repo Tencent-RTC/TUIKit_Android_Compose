@@ -13,28 +13,41 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.albumpicker.AlbumPicker
+import io.trtc.tuikit.atomicx.albumpicker.AlbumPickerModel
+import io.trtc.tuikit.atomicx.albumpicker.PickMediaType
 import io.trtc.tuikit.atomicx.albumpicker.interfaces.AlbumPickerListener
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Toast
-import io.trtc.tuikit.atomicx.basecomponent.theme.ThemeState
+import io.trtc.tuikit.atomicx.basecomponent.utils.appContext
+import io.trtc.tuikit.atomicx.emojipicker.replaceEmojiKeysWithNames
 import io.trtc.tuikit.atomicx.filepicker.FilePicker
 import io.trtc.tuikit.atomicx.filepicker.FilePickerListener
 import io.trtc.tuikit.atomicx.filepicker.util.FilePickerUtils
+import io.trtc.tuikit.atomicx.messageinput.config.ChatMessageInputConfig
+import io.trtc.tuikit.atomicx.messageinput.config.MessageInputConfigProtocol
 import io.trtc.tuikit.atomicx.messageinput.data.MessageInputMenuAction
+import io.trtc.tuikit.atomicx.messageinput.model.MentionInfo
 import io.trtc.tuikit.atomicx.messageinput.utils.FileUtils
 import io.trtc.tuikit.atomicx.messageinput.utils.ImageUtil
+import io.trtc.tuikit.atomicx.messagelist.utils.isGroupConversation
 import io.trtc.tuikit.atomicx.videorecorder.RecordMode
 import io.trtc.tuikit.atomicx.videorecorder.VideoRecordListener
 import io.trtc.tuikit.atomicx.videorecorder.VideoRecorder
 import io.trtc.tuikit.atomicx.videorecorder.VideoRecorderConfig
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationListStore
 import io.trtc.tuikit.atomicxcore.api.login.LoginStore
 import io.trtc.tuikit.atomicxcore.api.message.MessageBody
 import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 import io.trtc.tuikit.atomicxcore.api.message.MessageInputStore
 import io.trtc.tuikit.atomicxcore.api.message.MessageType
+import io.trtc.tuikit.atomicxcore.api.message.OfflinePushInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import java.util.Date
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -46,7 +59,25 @@ const val GIF_IMAGE_MAX_SIZE = 10 * 1024 * 1024
 const val AUDIO_MAX_RECORD_TIME = 60 * 1000
 const val AUDIO_MIN_RECORD_TIME = 2 * 1000
 
-class MessageInputViewModel(private val messageInputStore: MessageInputStore) : ViewModel() {
+class MessageInputViewModel(
+    private val messageInputStore: MessageInputStore,
+    private val messageInputConfig: MessageInputConfigProtocol = ChatMessageInputConfig()
+) : ViewModel() {
+
+    val conversationListStore = ConversationListStore.create()
+    val conversationListState = conversationListStore.conversationListState
+    val conversationID = messageInputStore.conversationID
+    val conversationInfo =
+        conversationListState.conversationList.map { list -> list.firstOrNull { it.conversationID == messageInputStore.conversationID } }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = null
+            )
+
+    init {
+        conversationListStore.fetchConversationInfo(messageInputStore.conversationID)
+    }
 
     @Composable
     fun getActions(): List<MessageInputMenuAction> {
@@ -85,68 +116,43 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
     }
 
     fun pickMediaAndSend(context: Context) {
-
         AlbumPicker.pickMedia(listener = object : AlbumPickerListener {
-
-            override fun onPicked(result: List<Pair<Uri, Boolean>>) {
-                viewModelScope.launch(Dispatchers.IO) {
-                    result.forEach { (originalUri, needTranscode) ->
-                        val fileName: String = FileUtils.getFileName(context, originalUri) ?: ""
-                        val fileExtension: String = FileUtils.getFileExtensionFromUrl(fileName)
-                        val mimeType =
-                            MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension)
-                        if (TextUtils.isEmpty(mimeType)) {
-                            Log.e("MessageInputViewModel", "mimeType is empty.")
-                            return@launch
-                        }
-                        var isVideo = false
-                        if (mimeType!!.contains("video")) {
-                            isVideo = true
-                        } else if (mimeType.contains("image")) {
-                            isVideo = false
-                        } else {
-                            Log.e("MessageInputViewModel", "mimeType is not image or video.")
-                            return@launch
-                        }
-                        val fileSize = FilePickerUtils.getFileSize(context, originalUri)
-                        if (isVideo) {
-                            if (fileSize >= 0 && fileSize > VIDEO_MAX_SIZE) {
-                                Toast.error(
-                                    context,
-                                    context.resources.getString(com.tencent.qcloud.tuicore.R.string.TUIKitErrorFileTooLarge)
-                                )
-                                return@forEach
-                            }
-                        } else {
-                            if (TextUtils.equals(mimeType, "image/gif")) {
-                                if (fileSize >= 0 && fileSize > GIF_IMAGE_MAX_SIZE) {
-                                    Toast.error(
-                                        context,
-                                        context.resources.getString(com.tencent.qcloud.tuicore.R.string.TUIKitErrorFileTooLarge)
-                                    )
-                                    return@forEach
-                                }
-                            } else {
-                                if (fileSize >= 0 && fileSize > IMAGE_MAX_SIZE) {
-                                    Toast.error(
-                                        context,
-                                        context.resources.getString(com.tencent.qcloud.tuicore.R.string.TUIKitErrorFileTooLarge)
-                                    )
-                                    return@forEach
-                                }
-                            }
-                        }
-                        val path = FileUtils.getPathFromUri(context, originalUri)
-                        if (isVideo) {
-                            sendVideoMessage(context, path)
-                        } else {
-                            sendImageMessage(context, path)
-                        }
-                    }
-                }
+            override fun onFinishedSelect(count: Int) {
+                Log.i("MessageInputViewModel", "on finished select. count:$count")
             }
 
-            override fun onCanceled() {
+            override fun onProgress(model: AlbumPickerModel, index: Int, progress: Double) {
+                viewModelScope.launch(Dispatchers.IO) {
+                    if (progress < 1.0) {
+                        return@launch
+                    }
+                    val mediaPath = model.mediaPath ?: return@launch
+                    val originalUri = Uri.parse(mediaPath)
+                    val fileSize = FilePickerUtils.getFileSize(context, originalUri)
+
+                    var isSizeTooLarge = false
+                    if (model.mediaType == PickMediaType.VIDEO) {
+                        isSizeTooLarge = fileSize > VIDEO_MAX_SIZE
+                    } else if (model.mediaType == PickMediaType.GIF) {
+                        isSizeTooLarge = fileSize > GIF_IMAGE_MAX_SIZE
+                    } else {
+                        isSizeTooLarge = fileSize > IMAGE_MAX_SIZE
+                    }
+
+                    if (isSizeTooLarge) {
+                        Toast.error(
+                            context,
+                            context.resources.getString(com.tencent.qcloud.tuicore.R.string.TUIKitErrorFileTooLarge)
+                        )
+                        return@launch
+                    }
+                    val path = FileUtils.getPathFromUri(context, originalUri)
+                    if (model.mediaType == PickMediaType.VIDEO) {
+                        sendVideoMessage(context, path)
+                    } else {
+                        sendImageMessage(context, path)
+                    }
+                }
             }
         })
     }
@@ -155,7 +161,6 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
         VideoRecorder.startRecord(
             VideoRecorderConfig(
                 recordMode = RecordMode.PHOTO_ONLY,
-                primaryColor = ThemeState.shared.currentPrimaryColor
             ), object : VideoRecordListener {
                 override fun onPhotoCaptured(filePath: String?) {
                     filePath?.let {
@@ -169,9 +174,8 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
         VideoRecorder.startRecord(
             VideoRecorderConfig(
                 recordMode = RecordMode.MIXED,
-                primaryColor = ThemeState.shared.currentPrimaryColor,
             ), object : VideoRecordListener {
-                override fun onVideoCaptured(filePath: String?, durationMs: Int) {
+                override fun onVideoCaptured(filePath: String?, durationMs: Int, thumbnailPath: String?) {
                     filePath?.let {
                         sendVideoMessage(context, filePath)
                     }
@@ -185,9 +189,18 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
             })
     }
 
-    fun sendTextMessage(context: Context?, text: String) {
-        val message = MessageInfo().apply { this.messageType = MessageType.TEXT }
-        message.messageBody = MessageBody().apply { this.text = text }
+    fun sendTextMessage(context: Context?, text: String, mentionList: List<MentionInfo>) {
+        val message = MessageInfo().apply {
+            this.messageType = MessageType.TEXT
+            if (mentionList.isNotEmpty()) {
+                this.atUserList = mentionList.map { it.userID }
+            }
+        }
+        message.messageBody = MessageBody().apply {
+            this.text = text
+        }
+        message.needReadReceipt = messageInputConfig.enableReadReceipt
+        message.offlinePushInfo = createOfflinePushInfo(context, message)
         messageInputStore.sendMessage(message, object : CompletionHandler {
             override fun onSuccess() {
             }
@@ -231,7 +244,9 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
                     this.originalImageWidth = size[0]
                     this.originalImageHeight = size[1]
                 }
+                this.offlinePushInfo = createOfflinePushInfo(context, this)
             }
+            message.needReadReceipt = messageInputConfig.enableReadReceipt
             messageInputStore.sendMessage(message, object : CompletionHandler {
                 override fun onSuccess() {
 
@@ -287,7 +302,9 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
                         this.videoType = "mp4"
                         this.videoPath = filePath
                     }
+                    this.offlinePushInfo = createOfflinePushInfo(context, this)
                 }
+                message.needReadReceipt = messageInputConfig.enableReadReceipt
                 messageInputStore.sendMessage(message, object : CompletionHandler {
                     override fun onSuccess() {
                         Log.i("MessageInputViewModel", "send video message success.")
@@ -309,8 +326,6 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
             } finally {
                 mmr.release()
             }
-
-
         }
     }
 
@@ -358,7 +373,9 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
                     this.fileName = fileName
                     this.fileSize = fileSize.toInt()
                 }
+                this.offlinePushInfo = createOfflinePushInfo(context, this)
             }
+            message.needReadReceipt = messageInputConfig.enableReadReceipt
             messageInputStore.sendMessage(message, object : CompletionHandler {
                 override fun onSuccess() {
 
@@ -378,6 +395,8 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
                 this.soundDuration = duration
             }
         }
+        message.needReadReceipt = messageInputConfig.enableReadReceipt
+        message.offlinePushInfo = createOfflinePushInfo(null, message)
         messageInputStore.sendMessage(message, object : CompletionHandler {
             override fun onSuccess() {
                 Log.i("MessageInputViewModel", "send audio message success.")
@@ -391,4 +410,101 @@ class MessageInputViewModel(private val messageInputStore: MessageInputStore) : 
             }
         })
     }
+
+    private fun createOfflinePushInfo(context: Context?, message: MessageInfo): OfflinePushInfo {
+        val isGroup = isGroupConversation(conversationID)
+        val groupId = if (isGroup) conversationID.removePrefix("group_") else ""
+
+        val loginUserInfo = LoginStore.shared.loginState.loginUserInfo.value
+        val selfUserId = loginUserInfo?.userID.orEmpty()
+        val selfName = loginUserInfo?.nickname ?: selfUserId
+
+        val chatName = conversationInfo.value?.title?.takeIf { it.isNotBlank() }
+
+        val senderNickName = if (isGroup) {
+            chatName ?: groupId
+        } else {
+            selfName
+        }
+
+        val description = createOfflinePushDescription(context, message)
+        val ext = createOfflinePushExtJson(
+            isGroup = isGroup,
+            description = description,
+            senderId = if (isGroup) groupId else selfUserId,
+            senderNickName = senderNickName,
+            faceUrl = loginUserInfo?.avatarURL
+        )
+
+        val extensionInfo: Map<String, Any> = mapOf(
+            "ext" to ext,
+            "AndroidOPPOChannelID" to "tuikit",
+            "AndroidHuaWeiCategory" to "IM",
+            "AndroidVIVOCategory" to "IM",
+            "AndroidHonorImportance" to "NORMAL",
+            "AndroidMeizuNotifyType" to 1,
+            "iOSInterruptionLevel" to "time-sensitive",
+            "enableIOSBackgroundNotification" to false
+        )
+
+        return OfflinePushInfo(
+            title = senderNickName,
+            description = description,
+            extensionInfo = extensionInfo
+        )
+    }
+
+    private fun createOfflinePushDescription(context: Context?, message: MessageInfo): String {
+        val actualContext = context ?: appContext
+
+        val content = when (message.messageType) {
+            MessageType.TEXT -> replaceEmojiKeysWithNames(message.messageBody?.text.orEmpty())
+            MessageType.IMAGE -> actualContext.getString(R.string.message_list_message_type_image)
+            MessageType.VIDEO -> actualContext.getString(R.string.message_list_message_type_video)
+            MessageType.FILE -> actualContext.getString(R.string.message_list_message_type_file)
+            MessageType.SOUND -> actualContext.getString(R.string.message_list_message_type_voice)
+            MessageType.FACE -> actualContext.getString(R.string.message_list_message_type_animate_emoji)
+            MessageType.MERGED -> actualContext.getString(R.string.message_list_message_type_merged)
+            else -> ""
+        }
+
+        return trimPushDescription(content)
+    }
+
+    private fun trimPushDescription(text: String, maxLength: Int = 50): String {
+        val normalized = text.trim().replace("\n", " ").replace("\r", " ")
+        if (normalized.length <= maxLength) return normalized
+        return normalized.substring(0, maxLength)
+    }
+
+    private fun createOfflinePushExtJson(
+        isGroup: Boolean,
+        description: String,
+        senderId: String,
+        senderNickName: String,
+        faceUrl: String?,
+    ): String {
+        val businessInfo = JSONObject().apply {
+            putOpt("content", description.takeIf { it.isNotEmpty() })
+            putOpt("sender", senderId)
+            putOpt("faceUrl", faceUrl)
+            putOpt("nickname", senderNickName)
+            putOpt("chatType", if (isGroup) 2 else 1)
+        }
+
+        val configInfo = JSONObject().apply {
+            putOpt("fcmPushType", 0)
+            putOpt("fcmNotificationType", 0)
+        }
+
+        return JSONObject()
+            .putOpt("entity", businessInfo)
+            .putOpt("timPushFeatures", configInfo)
+            .toString()
+    }
+
+    fun setDraft(draft: String?) {
+        conversationListStore.setConversationDraft(messageInputStore.conversationID, draft)
+    }
+
 }

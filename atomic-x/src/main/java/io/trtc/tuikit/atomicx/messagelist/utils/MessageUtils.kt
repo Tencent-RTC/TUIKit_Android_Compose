@@ -1,12 +1,12 @@
 package io.trtc.tuikit.atomicx.messagelist.utils
 
-import android.text.TextUtils
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.tencent.imsdk.v2.V2TIMMessage
 import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.basecomponent.utils.ContextProvider
+import io.trtc.tuikit.atomicx.emojipicker.EmojiManager
+import io.trtc.tuikit.atomicx.emojipicker.replaceEmojiKeysWithNames
 import io.trtc.tuikit.atomicxcore.api.contact.GroupJoinOption
 import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 import io.trtc.tuikit.atomicxcore.api.message.MessageType
@@ -14,7 +14,10 @@ import io.trtc.tuikit.atomicxcore.api.message.SystemMessageInfo
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 import java.util.TimeZone
+
+const val FORWARD_MSG_ABSTRACT_LENGTH = 98
 
 object MessageUtils {
 
@@ -230,6 +233,7 @@ object MessageUtils {
             }
 
             MessageType.SYSTEM -> getSystemInfoDisplayString(messageInfo.messageBody?.systemMessage)
+            MessageType.MERGED -> context.getString(R.string.message_list_message_type_merged)
             else -> ""
         }
     }
@@ -322,25 +326,8 @@ object MessageUtils {
             }
         }
     }
-}
 
-val V2TIMMessage?.messageSenderDisplayName: String
-    get() = run {
-        if (this == null) {
-            return ""
-        }
-        var displayName: String = ""
-        if (!TextUtils.isEmpty(nameCard)) {
-            displayName = nameCard
-        } else if (!TextUtils.isEmpty(friendRemark)) {
-            displayName = friendRemark
-        } else if (!TextUtils.isEmpty(nickName)) {
-            displayName = nickName
-        } else {
-            displayName = sender
-        }
-        return displayName
-    }
+}
 
 fun jsonData2Dictionary(jsonData: ByteArray?): Map<String, Any>? {
     if (jsonData == null) return null
@@ -353,4 +340,84 @@ fun jsonData2Dictionary(jsonData: ByteArray?): Map<String, Any>? {
         Log.e("Util", "Gson conversion failed", e)
         null
     }
+}
+
+fun isGroupConversation(conversationID: String): Boolean {
+    return conversationID.startsWith("group_")
+}
+
+/**
+ * Align emoji string to prevent cutting emoji in the middle
+ * @param userName User name for calculating prefix length
+ * @param text Text to align
+ * @return Aligned text that won't cut emoji in the middle
+ */
+fun alignEmojiString(userName: String, text: String?): String {
+    if (text.isNullOrEmpty()) return ""
+
+    val emojiKeyList = EmojiManager.littleEmojiKeyList
+    val separator = "\u202C:"
+    val prefixLength = userName.length + separator.length
+    val maxTextLength = FORWARD_MSG_ABSTRACT_LENGTH - prefixLength
+
+    if (maxTextLength <= 0) return ""
+    if (text.length <= maxTextLength) return text
+
+    var safeCutPosition = maxTextLength
+
+    for (emojiKey in emojiKeyList) {
+        val emojiLength = emojiKey.length
+        if (emojiLength <= 1) continue
+
+        val searchStart = maxOf(0, maxTextLength - emojiLength + 1)
+        val searchEnd = minOf(text.length, maxTextLength + emojiLength - 1)
+
+        for (i in searchStart until searchEnd) {
+            if (i + emojiLength <= text.length) {
+                val substring = text.substring(i, i + emojiLength)
+                if (substring == emojiKey) {
+                    val emojiEnd = i + emojiLength
+                    if (emojiEnd > maxTextLength && i < maxTextLength) {
+                        safeCutPosition = minOf(safeCutPosition, i)
+                    }
+                }
+            }
+        }
+    }
+
+    return text.substring(0, safeCutPosition)
+}
+
+/**
+ * Get message abstract text based on message type
+ * @param message MessageInfo to get abstract from
+ * @return Abstract text for the message
+ */
+fun getMessageTypeAbstract(message: MessageInfo): String {
+    val context = ContextProvider.appContext
+    return when (message.messageType) {
+        MessageType.TEXT -> replaceEmojiKeysWithNames(message.messageBody?.text.orEmpty())
+        MessageType.FACE -> context.getString(R.string.message_list_message_type_animate_emoji)
+        MessageType.SOUND -> context.getString(R.string.message_list_message_type_voice)
+        MessageType.IMAGE -> context.getString(R.string.message_list_message_type_image)
+        MessageType.VIDEO -> context.getString(R.string.message_list_message_type_video)
+        MessageType.FILE -> context.getString(R.string.message_list_message_type_file)
+        MessageType.MERGED -> context.getString(R.string.message_list_merge_message)
+        else -> ""
+    }
+}
+
+/**
+ * Build forward message abstract item
+ * @param userName User display name
+ * @param messageAbstract Message abstract text
+ * @return Formatted abstract string
+ */
+fun buildForwardAbstractItem(userName: String, messageAbstract: String): String {
+    val alignedAbstract = alignEmojiString(userName, messageAbstract)
+    return String.format(Locale.US, "%1\$s\u202C:%2\$s", userName, alignedAbstract)
+}
+
+fun isGroupChat(conversationID: String): Boolean {
+    return conversationID.startsWith("group_")
 }

@@ -14,4 +14,7 @@
     <string name="message_input_recording_time_exceeded">录制时间超过限时</string>
     <string name="message_input_recording_status">录制中...</string>
     <string name="message_input_send_failed">发送失败</string>
+    <string name="message_input_mention_all">所有人</string>
+    <string name="message_input_mention_select_member">选择群成员</string>
+    <string name="message_input_back">返回</string>
 </resources>

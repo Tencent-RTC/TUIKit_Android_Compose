@@ -25,8 +25,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -77,6 +80,7 @@ fun ChatPage(
     val avatarUrl = conversationState.value?.avatarURL
     val displayName = conversationState.value?.title
     val colors = LocalTheme.current.colors
+    var isMultiSelectMode by remember { mutableStateOf(false) }
     Scaffold(
         modifier = Modifier
             .background(color = colors.bgColorOperate)
@@ -99,12 +103,14 @@ fun ChatPage(
             }
         },
         bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(color = colors.bgColorOperate)
-            ) {
-                MessageInput(modifier = Modifier.navigationBarsPadding(), conversationID = conversationID)
+            if (!isMultiSelectMode) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = colors.bgColorOperate)
+                ) {
+                    MessageInput(modifier = Modifier.navigationBarsPadding(), conversationID = conversationID)
+                }
             }
 
         }) { padding ->
@@ -112,7 +118,9 @@ fun ChatPage(
             modifier = Modifier
                 .padding(padding)
         ) {
-            MessageList(conversationID = conversationID, locateMessage = locateMessage) {
+            MessageList(conversationID = conversationID, locateMessage = locateMessage, onMultiSelectStateChanged = {
+                isMultiSelectMode = it
+            }) {
                 onUserClick(it)
             }
         }

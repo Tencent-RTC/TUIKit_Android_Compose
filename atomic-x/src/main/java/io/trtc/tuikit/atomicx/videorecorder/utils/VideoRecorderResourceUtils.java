@@ -13,7 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
-import com.tencent.qcloud.tuicore.ServiceInitializer;
+import io.trtc.tuikit.atomicx.basecomponent.utils.ContextProvider;
 import java.util.Locale;
 
 public class VideoRecorderResourceUtils {
@@ -22,6 +22,8 @@ public class VideoRecorderResourceUtils {
 
     public static final String TYPE_STRING = "string";
     public static final String TYPE_DRAWABLE = "drawable";
+
+    private static Context sContext;
 
     public static int getDrawableId(String resName) {
         if (resName != null && resName.startsWith(DRAWABLE_RESOURCE_PREFIX)) {
@@ -42,15 +44,26 @@ public class VideoRecorderResourceUtils {
     }
 
     public static String getString(@StringRes int resId) {
-        return getResources().getString(resId);
+        return getContext().getString(resId);
     }
 
     public static int getColor(int colorId) {
         return getResources().getColor(colorId);
     }
 
+    public static void setContext(Context context) {
+        sContext = context;
+    }
+
+    public static Context getContext() {
+        if (sContext != null) {
+            return sContext;
+        }
+        return ContextProvider.getAppContext();
+    }
+
     public static Resources getResources() {
-        return ServiceInitializer.getAppContext().getResources();
+        return getContext().getResources();
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
@@ -94,7 +107,7 @@ public class VideoRecorderResourceUtils {
     }
 
     public static String getPackageName() {
-        return ServiceInitializer.getAppContext().getPackageName();
+        return getContext().getPackageName();
     }
 
     public static String secondsToTimeString(long timeMs) {

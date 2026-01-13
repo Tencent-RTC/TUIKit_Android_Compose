@@ -8,11 +8,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
+import io.trtc.tuikit.atomicx.messagelist.ui.MessageRenderConfig
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageRenderer
 import io.trtc.tuikit.atomicx.messagelist.utils.MessageUtils
 import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 
-class SystemMessageRenderer : MessageRenderer<MessageInfo> {
+class SystemMessageRenderer : MessageRenderer {
+
+    override val renderConfig: MessageRenderConfig = MessageRenderConfig(showMessageMeta = false)
+
     @Composable
     override fun Render(message: MessageInfo) {
         val colors = LocalTheme.current.colors
@@ -26,7 +30,4 @@ class SystemMessageRenderer : MessageRenderer<MessageInfo> {
         )
     }
 
-    override fun showMessageMeta(): Boolean {
-        return false
-    }
 }

@@ -42,6 +42,7 @@
     <string name="message_list_message_type_voice">[語音]</string>
     <string name="message_list_message_type_video">[視頻]</string>
     <string name="message_list_message_type_file">[文件]</string>
+    <string name="message_list_message_type_merged">[聊天記錄]</string>
     <string name="message_list_message_type_animate_emoji">[動畫表情]</string>
     <string name="message_list_set_mute_all_format">%s 開啟全員禁言</string>
     <string name="message_list_unmute_all_format">%s 取消全員禁言</string>
@@ -64,5 +65,34 @@
     <string name="message_list_day_hour_min_second">%1$d天%2$d小時%3$d分%4$d秒</string>
 
     <string name="messaeg_list_resend_tips">確定重發嗎？</string>
+
+    <string name="message_list_multi_select_count">已選擇 %d 個</string>
+    <string name="message_list_multi_select_forward">轉發</string>
+    <string name="message_list_forward_button_text">轉發(%d)</string>
+    <string name="message_list_select_conversation">選擇對話</string>
+    <string name="message_list_selected_conversations">已選擇 %d 個對話</string>
+    <string name="message_list_delete_messages_tips">確定刪除已選訊息？</string>
+    <string name="message_list_forward_by_merge">合併轉發</string>
+    <string name="message_list_forward_by_separate">逐條轉發</string>
+    <string name="message_list_forward_oneByOne_limit_number_tip">轉發訊息過多，暫不支援逐條轉發</string>
+    <string name="message_list_forward_failed_tip">發送失敗訊息不支援轉發！</string>
+    <string name="message_list_forward_chat_record">聊天記錄</string>
+    <string name="message_list_forward_chats">群聊的聊天記錄</string>
+    <string name="message_list_and_text">和</string>
+    <string name="message_list_forward_chats_c2c">的聊天記錄</string>
+    <string name="message_list_recent_conversations">最近聊天</string>
+    <string name="message_list_forward_compatible_text">不支援合併轉發訊息，請升級到新版本。</string>
+
+    <string name="message_list_menu_convert_to_text">轉文字</string>
+    <string name="message_list_menu_hide">隱藏</string>
+    <string name="message_list_convert_to_text_failed">轉換失敗</string>
+    <string name="message_list_copied">已複製</string>
+
+    <string name="message_list_menu_translate">翻譯</string>
+    <string name="message_list_translate_failed">翻譯失敗</string>
+    <string name="message_list_translate_default_tips">由騰訊雲 IM 提供翻譯支持</string>
+
+    <string name="message_list_violation_send_failed">涉及敏感內容，發送失敗</string>
+    <string name="message_list_violation_received">涉及敏感內容</string>
 
 </resources>

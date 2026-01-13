@@ -7,20 +7,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -53,6 +54,7 @@ object Toast {
     const val DURATION = 3000L
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
     private var currentDialog: Dialog? = null
+    private var currentToast: android.widget.Toast? = null
     private var hideJob: Job? = null
 
     fun info(context: Context, message: String) {
@@ -135,6 +137,32 @@ object Toast {
         val activity = context as? Activity
         if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
             showWithDialog(activity, message, type, duration, onDismiss)
+        } else {
+            showWithToast(context, message, duration, onDismiss)
+        }
+    }
+
+    private fun showWithToast(
+        context: Context,
+        message: String,
+        duration: Long,
+        onDismiss: (() -> Unit)?
+    ) {
+        val toastDuration = if (duration > 2000) {
+            android.widget.Toast.LENGTH_LONG
+        } else {
+            android.widget.Toast.LENGTH_SHORT
+        }
+        currentToast = android.widget.Toast.makeText(context, message, toastDuration).also {
+            it.show()
+        }
+
+        if (duration > 0) {
+            hideJob = coroutineScope.launch {
+                delay(duration)
+                hideInternal()
+                onDismiss?.invoke()
+            }
         }
     }
 
@@ -156,7 +184,6 @@ object Toast {
             setCancelable(false)
             setCanceledOnTouchOutside(false)
 
-            
             window?.setDimAmount(0f)
             window?.addFlags(
                 android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
@@ -208,7 +235,10 @@ object Toast {
 
             currentDialog?.dismiss()
             currentDialog = null
-        } catch (e: Exception) {
+
+            currentToast?.cancel()
+            currentToast = null
+        } catch (_: Exception) {
         }
     }
 }
@@ -219,42 +249,51 @@ private fun ToastContent(
     type: ToastType,
 ) {
 
-    val height = 40.dp
     val horizontalPadding = 16.dp
     val verticalPadding = 9.dp
     val fontSize = 14.sp
-    val iconGap = 4.dp
+    val iconGap = 8.dp
     val colors = LocalTheme.current.colors
-    Surface(
-        modifier = Modifier
-            .widthIn(max = 340.dp)
-            .height(height),
-        shape = RoundedCornerShape(6.dp),
-        color = colors.bgColorOperate,
-        shadowElevation = 8.dp
-    ) {
-        Box(
+    Box(modifier = Modifier.padding(12.dp)) {
+
+        Card(
             modifier = Modifier
-                .padding(horizontal = horizontalPadding, vertical = verticalPadding),
-            contentAlignment = Alignment.Center
+                .widthIn(max = 340.dp),
+            shape = RoundedCornerShape(6.dp),
+            colors = CardDefaults.cardColors(containerColor = colors.bgColorOperate),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(iconGap)
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = horizontalPadding, vertical = verticalPadding),
+                contentAlignment = Alignment.Center
             ) {
-                if (type != ToastType.Text) {
-                    ToastIcon(
-                        type = type,
-                        size = 16.dp
+                Row(
+                    modifier = Modifier.padding(),
+                    horizontalArrangement = Arrangement.spacedBy(iconGap)
+                ) {
+                    val lineHeightDp = with(LocalDensity.current) {
+                        (fontSize.value * 1.57).sp.toDp()
+                    }
+                    val iconTopPadding = (lineHeightDp - 16.dp) / 2
+                    if (type != ToastType.Text) {
+                        ToastIcon(
+                            modifier = Modifier
+                                .align(Alignment.Top)
+                                .padding(top = iconTopPadding),
+                            type = type,
+                            size = 16.dp
+                        )
+                    }
+                    Text(
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                        text = message,
+                        fontSize = fontSize,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.textColorPrimary,
+                        lineHeight = (fontSize.value * 1.57).sp
                     )
                 }
-                Text(
-                    text = message,
-                    fontSize = fontSize,
-                    fontWeight = FontWeight.Medium,
-                    color = colors.textColorPrimary,
-                    lineHeight = (fontSize.value * 1.57).sp
-                )
             }
         }
     }
@@ -262,6 +301,7 @@ private fun ToastContent(
 
 @Composable
 private fun ToastIcon(
+    modifier: Modifier = Modifier,
     type: ToastType,
     size: Dp
 ) {
@@ -278,16 +318,16 @@ private fun ToastIcon(
             Icon(
                 painter = icon,
                 contentDescription = null,
-                modifier = Modifier.size(size),
+                modifier = modifier.size(size),
                 tint = Color.Unspecified
             )
         }
 
         type == ToastType.Loading -> {
             CircularProgressIndicator(
-                modifier = Modifier.size(size),
+                modifier = modifier.size(size),
                 strokeWidth = 2.dp,
-                color = androidx.compose.ui.graphics.Color(0xFF1C66E5)
+                color = Color(0xFF1C66E5)
             )
         }
 

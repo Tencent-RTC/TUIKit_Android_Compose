@@ -27,10 +27,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,15 +49,20 @@ import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.audiorecorder.AudioRecorderView
 import io.trtc.tuikit.atomicx.audiorecorder.AudioRecorderViewConfig
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
+import io.trtc.tuikit.atomicx.basecomponent.utils.onEvent
 import io.trtc.tuikit.atomicx.emojipicker.ui.EmojiPicker
 import io.trtc.tuikit.atomicx.messageinput.config.ChatMessageInputConfig
 import io.trtc.tuikit.atomicx.messageinput.config.MessageInputConfigProtocol
+import io.trtc.tuikit.atomicx.messageinput.model.MentionInfo
 import io.trtc.tuikit.atomicx.messageinput.utils.KeyboardActionType
 import io.trtc.tuikit.atomicx.messageinput.utils.rememberKeyboardState
 import io.trtc.tuikit.atomicx.messageinput.viewmodels.AUDIO_MAX_RECORD_TIME
 import io.trtc.tuikit.atomicx.messageinput.viewmodels.AUDIO_MIN_RECORD_TIME
 import io.trtc.tuikit.atomicx.messageinput.viewmodels.MessageInputViewModel
 import io.trtc.tuikit.atomicx.messageinput.viewmodels.MessageInputViewModelFactory
+import io.trtc.tuikit.atomicx.messagelist.utils.isGroupConversation
+import io.trtc.tuikit.atomicx.messagelist.utils.senderDisplayName
+import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 import io.trtc.tuikit.atomicxcore.api.message.MessageInputStore
 
 @Composable
@@ -63,7 +71,10 @@ fun MessageInput(
     modifier: Modifier = Modifier,
     config: MessageInputConfigProtocol = ChatMessageInputConfig(),
     messageInputViewModelFactory: MessageInputViewModelFactory =
-        MessageInputViewModelFactory(MessageInputStore.create(conversationID)),
+        MessageInputViewModelFactory(
+            messageInputStore = MessageInputStore.create(conversationID),
+            messageInputConfig = config
+        ),
 ) {
     val messageInputViewModel =
         viewModel(MessageInputViewModel::class, factory = messageInputViewModelFactory)
@@ -91,14 +102,55 @@ private fun MessageInput(
     var savedKeyboardMaxHeight by remember { mutableStateOf(defaultPanelHeight) }
 
     var currentInputState by remember { mutableStateOf(InputState.NONE) }
+    val conversationInfo by messageInputViewModel.conversationInfo.collectAsState()
     var inputText by remember { mutableStateOf("") }
-    val editTextState = rememberAndroidEditTextState()
+    val editTextState = remember(messageInputViewModel) { AndroidEditTextState() }
     var isShowActions by remember { mutableStateOf(false) }
 
+    var isShowMentionDialog by remember { mutableStateOf(false) }
+    val isGroupChat = isGroupConversation(messageInputViewModel.conversationID)
+    val coroutineScope = rememberCoroutineScope()
+    var isProgrammaticInsert by remember { mutableStateOf(false) }
+
+    DisposableEffect(Unit) {
+        val job = coroutineScope.onEvent<Map<*, *>> { event ->
+            val source = event["source"] as? String
+            val eventType = event["event"] as? String
+            if (source == "MessageList" && eventType == "onUserLongPress") {
+                if (!isGroupChat) return@onEvent
+                inputText = editTextState.getText()
+                val userID = event["userID"] as? String ?: return@onEvent
+                val message = event["message"] as? MessageInfo
+                if (message?.isSelf == true) return@onEvent
+                val displayName = message?.senderDisplayName ?: userID
+                val mentionInfo = MentionInfo(userID = userID, displayName = displayName)
+                isProgrammaticInsert = true
+                editTextState.insertAtomicText(mentionInfo.mentionText, mentionInfo)
+                isProgrammaticInsert = false
+            }
+        }
+        onDispose { job.cancel() }
+    }
 
     var targetPanelHeight by remember { mutableStateOf(0.dp) }
     var isUserKeyboardHeight by remember { mutableStateOf(false) }
     var isUserKeyboardMaxHeight by remember { mutableStateOf(false) }
+
+    LaunchedEffect(conversationInfo?.draft) {
+        conversationInfo?.draft?.let { draft ->
+            if (inputText.isEmpty() && draft.isNotEmpty()) {
+                inputText = draft
+                editTextState.setText(draft)
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            editTextState.dispose()
+            messageInputViewModel.setDraft(inputText)
+        }
+    }
 
     val animatedPanelHeight by animateDpAsState(
         targetValue = targetPanelHeight,
@@ -116,7 +168,6 @@ private fun MessageInput(
         val oldState = currentInputState
         currentInputState = newState
 
-        println("transitionToState: $oldState -> $newState")
         when {
             oldState == InputState.NONE && newState == InputState.SHOW_KEYBOARD -> {
                 isUserKeyboardHeight = true
@@ -257,6 +308,17 @@ private fun MessageInput(
                         AndroidEditText(
                             text = inputText,
                             onTextChange = { newText ->
+                                if (!isProgrammaticInsert && config.enableMention && isGroupChat && newText.length > inputText.length) {
+                                    val insertedLength = newText.length - inputText.length
+                                    val insertPosition = newText.indices.firstOrNull { i ->
+                                        i >= inputText.length || newText[i] != inputText[i]
+                                    } ?: inputText.length
+                                    val insertedText =
+                                        newText.substring(insertPosition, insertPosition + insertedLength)
+                                    if (insertedText.contains('@') || insertedText.contains('＠')) {
+                                        isShowMentionDialog = true
+                                    }
+                                }
                                 inputText = newText
                             },
                             modifier = Modifier.weight(1f),
@@ -273,7 +335,14 @@ private fun MessageInput(
                             },
                             onSendMessage = {
                                 if (inputText.isNotEmpty()) {
-                                    messageInputViewModel.sendTextMessage(activity, inputText)
+                                    val mentionList = editTextState.getAtomicRanges<MentionInfo>().map { range ->
+                                        range.data
+                                    }
+                                    messageInputViewModel.sendTextMessage(
+                                        activity,
+                                        inputText,
+                                        mentionList
+                                    )
                                     inputText = ""
                                     editTextState.setText("")
                                 }
@@ -361,7 +430,14 @@ private fun MessageInput(
                             editTextState.insertText(emoji.key)
                         }, onSendClick = {
                             if (inputText.isNotEmpty()) {
-                                messageInputViewModel.sendTextMessage(activity, inputText)
+                                val mentionList = editTextState.getAtomicRanges<MentionInfo>().map { range ->
+                                    range.data
+                                }
+                                messageInputViewModel.sendTextMessage(
+                                    activity,
+                                    inputText,
+                                    mentionList
+                                )
                                 inputText = ""
                                 editTextState.setText("")
                             }
@@ -381,6 +457,24 @@ private fun MessageInput(
             onActionClick = { action ->
                 action.onClick()
                 isShowActions = false
+            }
+        )
+
+        val groupID = conversationInfo?.conversationID?.removePrefix("group_") ?: ""
+        MentionMemberDialog(
+            isVisible = isShowMentionDialog,
+            groupID = groupID,
+            onDismiss = {
+                isShowMentionDialog = false
+            },
+            onConfirm = { selectedMentions ->
+                isShowMentionDialog = false
+                if (selectedMentions.isNotEmpty()) {
+                    editTextState.deleteCharBeforeCursor()
+                    selectedMentions.forEach {
+                        editTextState.insertAtomicText(it.mentionText, it)
+                    }
+                }
             }
         )
     }

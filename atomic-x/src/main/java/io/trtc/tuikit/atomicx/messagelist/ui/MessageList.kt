@@ -1,34 +1,31 @@
 package io.trtc.tuikit.atomicx.messagelist.ui
 
-import android.annotation.SuppressLint
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -53,43 +50,52 @@ import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.trtc.tuikit.atomicx.R
+import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.ActionItem
+import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.ActionSheet
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AlertDialog
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Avatar
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AvatarSize
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
+import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Toast
 import io.trtc.tuikit.atomicx.basecomponent.config.MessageAlignment
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
+import io.trtc.tuikit.atomicx.basecomponent.utils.EventBus
+import io.trtc.tuikit.atomicx.emojipicker.RecentEmojiManager
+import io.trtc.tuikit.atomicx.messagelist.MessageReadReceiptDialog
 import io.trtc.tuikit.atomicx.messagelist.config.ChatMessageListConfig
 import io.trtc.tuikit.atomicx.messagelist.config.MessageListConfigProtocol
 import io.trtc.tuikit.atomicx.messagelist.model.MessageCustomAction
-import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.DefaultMessageRenderer
+import io.trtc.tuikit.atomicx.messagelist.ui.widgets.MultiSelectBottomBar
+import io.trtc.tuikit.atomicx.messagelist.ui.widgets.ReactionDetailSheet
+import io.trtc.tuikit.atomicx.messagelist.ui.widgets.ReactionEmojiPicker
+import io.trtc.tuikit.atomicx.messagelist.ui.widgets.ReactionEmojiPickerSheet
 import io.trtc.tuikit.atomicx.messagelist.viewmodels.HighlightManager
 import io.trtc.tuikit.atomicx.messagelist.viewmodels.MessageListViewModel
 import io.trtc.tuikit.atomicx.messagelist.viewmodels.MessageListViewModelFactory
 import io.trtc.tuikit.atomicx.messagelist.viewmodels.MessageUIAction
-import io.trtc.tuikit.atomicxcore.api.message.MessageActionStore
+import io.trtc.tuikit.atomicx.messagelist.viewmodels.forwardMessageCountLimit
+import io.trtc.tuikit.atomicxcore.api.CompletionHandler
+import io.trtc.tuikit.atomicxcore.api.message.MessageEvent
+import io.trtc.tuikit.atomicxcore.api.message.MessageForwardType
 import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
-import io.trtc.tuikit.atomicxcore.api.message.MessageListChangeReason
 import io.trtc.tuikit.atomicxcore.api.message.MessageListStore
 import io.trtc.tuikit.atomicxcore.api.message.MessageListType
 import io.trtc.tuikit.atomicxcore.api.message.MessageStatus
-import io.trtc.tuikit.atomicxcore.api.message.MessageType
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlin.math.ceil
 
 val LocalMessageListViewModel =
     compositionLocalOf<MessageListViewModel> { error("No ViewModel provided") }
-val LocalMessage = compositionLocalOf<MessageInfo> { error("No Message provided") }
-val LocalMessageListConfig = compositionLocalOf<MessageListConfigProtocol> { error("No MessageListConfig provided") }
-val LocalCustomActions = compositionLocalOf<List<MessageCustomAction>> { error("No MessageCustomAction provided") }
+val LocalMessageListConfig = compositionLocalOf<MessageListConfigProtocol> { ChatMessageListConfig() }
+val LocalCustomActions = compositionLocalOf<List<MessageCustomAction>> { emptyList() }
+val LocalMessageRenderConfig = compositionLocalOf { MessageRenderConfig() }
 
 @Composable
 fun MessageList(
@@ -99,9 +105,11 @@ fun MessageList(
     customActions: List<MessageCustomAction> = emptyList(),
     locateMessage: MessageInfo? = null,
     messageListViewModelFactory: MessageListViewModelFactory = MessageListViewModelFactory(
-        MessageListStore.create(conversationID, MessageListType.HISTORY),
-        MessageActionStore.create(), locateMessage
+        messageListStore = MessageListStore.create(conversationID, MessageListType.HISTORY),
+        locateMessage = locateMessage,
+        messageListConfig = config
     ),
+    onMultiSelectStateChanged: (Boolean) -> Unit = {},
     onUserClick: (String) -> Unit = {},
 ) {
     val messageListViewModel =
@@ -121,7 +129,7 @@ fun MessageList(
         LocalMessageListConfig provides config,
         LocalCustomActions provides customActions
     ) {
-        MessageList(modifier, messageListViewModel, onUserClick)
+        MessageList(modifier, messageListViewModel, onMultiSelectStateChanged, onUserClick)
     }
 }
 
@@ -130,14 +138,44 @@ fun MessageList(
 private fun MessageList(
     modifier: Modifier,
     messageListViewModel: MessageListViewModel,
+    onMultiSelectStateChanged: (Boolean) -> Unit,
     onUserClick: (String) -> Unit = {},
 ) {
     val colors = LocalTheme.current.colors
     val density = LocalDensity.current
+    val context = LocalContext.current
     val config = LocalMessageListConfig.current
     val configuration = LocalConfiguration.current
     val messageList by messageListViewModel.messageList.collectAsState()
+    val isMultiSelectMode by messageListViewModel.isMultiSelectMode.collectAsState()
+    val selectedMessages by messageListViewModel.selectedMessages.collectAsState()
+    val singleMessageToForward by messageListViewModel.onSingleMessageForward.collectAsState()
+    val readReceiptMessage by messageListViewModel.readReceiptMessage.collectAsState()
+    val longPressActionMessage by messageListViewModel.longPressActionMessage.collectAsState()
+    val reactionDetailMessage by messageListViewModel.reactionDetailMessage.collectAsState()
+    val showReactionEmojiPickerForMessage by messageListViewModel.showEmojiPickerForMessage.collectAsState()
     val isListInitialized = messageList.isNotEmpty()
+    var showForwardDialog by remember { mutableStateOf(false) }
+    var showForwardTypeSheet by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var forwardingMessages by remember { mutableStateOf<List<MessageInfo>>(emptyList()) }
+
+    LaunchedEffect(singleMessageToForward) {
+        singleMessageToForward?.let { message ->
+            forwardingMessages = listOf(message)
+            messageListViewModel.forwardType = MessageForwardType.SEPARATE
+            showForwardDialog = true
+        }
+    }
+
+    LaunchedEffect(isMultiSelectMode) {
+        if (isMultiSelectMode) {
+            onMultiSelectStateChanged(true)
+        } else {
+            onMultiSelectStateChanged(false)
+        }
+    }
+
     val listState = remember(isListInitialized) {
         if (isListInitialized) {
             if (messageListViewModel.locateMessage != null) {
@@ -158,456 +196,444 @@ private fun MessageList(
     }
 
     var canLoadMore by remember { mutableStateOf(true) }
+    var isProgrammaticScroll by remember { mutableStateOf(false) }
 
     suspend fun animateScrollToEnd() {
+        isProgrammaticScroll = true
         canLoadMore = false
-        listState.animateScrollToItem(0)
+        try {
+            listState.animateScrollToItem(0)
+            delay(100)
+        } finally {
+            isProgrammaticScroll = false
+        }
     }
 
     suspend fun scrollToEnd() {
+        val itemCount = listState.layoutInfo.totalItemsCount
+        val firstVisible = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: -1
+
+        if (itemCount == 0) {
+            return
+        }
+
+        isProgrammaticScroll = true
         canLoadMore = false
-        listState.scrollToItem(0)
+        try {
+            listState.scrollToItem(0)
+            delay(100)
+            val afterScroll = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: -1
+        } finally {
+            isProgrammaticScroll = false
+        }
     }
 
-    LaunchedEffect(messageListViewModel.messageListChangeSource) {
-        when (messageListViewModel.messageListChangeSource) {
-            MessageListChangeReason.RECV_MESSAGE -> {
-                val shouldScrollToEnd = with(listState) {
-                    val firstVisible = layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
-                    firstVisible <= 2
+    LaunchedEffect(messageList) {
+        messageListViewModel.messageEvent.collect { event ->
+            when (event) {
+                is MessageEvent.RecvMessage -> {
+                    val shouldScrollToEnd = with(listState) {
+                        val firstVisible = layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+                        val result = firstVisible <= 2
+                        result
+                    }
+
+                    if (shouldScrollToEnd) {
+                        snapshotFlow { listState.layoutInfo.totalItemsCount }
+                            .first { it > 0 }
+                        scrollToEnd()
+                    }
                 }
 
-                if (shouldScrollToEnd) {
-                    animateScrollToEnd()
+                is MessageEvent.FetchMessages -> {
+                }
+
+                is MessageEvent.FetchMoreMessages -> {
+                }
+
+                is MessageEvent.SendMessage -> {
+                    snapshotFlow { listState.layoutInfo.totalItemsCount }
+                        .first { it > 0 }
+                    scrollToEnd()
+                }
+
+                is MessageEvent.DeleteMessages -> {
                 }
             }
-
-            MessageListChangeReason.FETCH_MESSAGES -> {
-            }
-
-            MessageListChangeReason.FETCH_MORE_MESSAGES -> {}
-            MessageListChangeReason.SEND_MESSAGE -> {
-                scrollToEnd()
-            }
-
-            MessageListChangeReason.DELETE_MESSAGE -> {}
-            MessageListChangeReason.UNKNOWN -> {
-                //do nothing
-            }
-
-            else -> {}
         }
     }
 
     CompositionLocalProvider(LocalMessageListViewModel provides messageListViewModel) {
 
-        Column(
-            modifier = modifier
-                .background(color = colors.bgColorOperate)
-                .padding(horizontal = config.horizontalPadding)
-        ) {
-            LaunchedEffect(listState) {
-
-                snapshotFlow {
-                    listState.layoutInfo.visibleItemsInfo
-                }.collect { visibleItems ->
-                    if (!canLoadMore) {
-                        return@collect
-                    }
-                    val firstVisibleIndex = visibleItems.firstOrNull()?.index ?: -1
-                    val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: -1
-
-                    if (firstVisibleIndex >= 0 && firstVisibleIndex <= 2) {
-                        messageListViewModel.loadMoreNewerMessage()
-                    }
-
-                    if (lastVisibleIndex >= 0 && lastVisibleIndex >= messageList.size - 3) {
-                        messageListViewModel.loadMoreOlderMessage()
-                    }
-                }
-            }
-
-            LazyColumn(
+        Box(modifier = modifier) {
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                if (event.changes.any { it.pressed || it.positionChanged() }) {
-                                    canLoadMore = true
+                    .background(color = colors.bgColorOperate)
+                    .padding(horizontal = config.horizontalPadding)
+            ) {
+                LaunchedEffect(listState) {
+
+                    snapshotFlow {
+                        listState.layoutInfo.visibleItemsInfo
+                    }.collect { visibleItems ->
+                        launch {
+                            val visibleMessages = visibleItems.mapNotNull { itemInfo ->
+                                messageList.getOrNull(itemInfo.index)
+                            }
+                            messageListViewModel.sendReadReceipts(visibleMessages)
+                        }
+
+                        if (!canLoadMore || isProgrammaticScroll) {
+                            return@collect
+                        }
+                        val firstVisibleIndex = visibleItems.firstOrNull()?.index ?: -1
+                        val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: -1
+
+                        if (firstVisibleIndex >= 0 && firstVisibleIndex <= 2) {
+                            messageListViewModel.loadMoreNewerMessage()
+                        }
+
+                        if (lastVisibleIndex >= 0 && lastVisibleIndex >= messageList.size - 3) {
+                            messageListViewModel.loadMoreOlderMessage()
+                        }
+
+                    }
+                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f)
+                        .pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    if (event.changes.any { it.pressed || it.positionChanged() }) {
+                                        if (!isProgrammaticScroll) {
+                                            canLoadMore = true
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    },
-                state = listState,
-                reverseLayout = true,
-                verticalArrangement = Arrangement.Top
-            ) {
-                if (messageListViewModel.loadingState.isLoadingNewer) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = colors.textColorSecondary,
-                                strokeWidth = 2.dp
-                            )
-                        }
-                    }
-                }
-
-                itemsIndexed(
-                    items = messageList,
-                    key = { _, item -> item.msgID!! }
-                ) { index, message ->
-                    MessageItem(
-                        modifier = Modifier.animateItem(),
-                        index = index,
-                        message = message
-                    ) {
-                        onUserClick(it ?: "")
-                    }
-                }
-
-                if (messageListViewModel.loadingState.isLoadingOlder) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = colors.textColorSecondary,
-                                strokeWidth = 2.dp
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-}
-
-@Composable
-fun MessageItem(
-    modifier: Modifier = Modifier,
-    index: Int,
-    message: MessageInfo,
-    onUserClick: (String?) -> Unit
-) {
-    val colors = LocalTheme.current.colors
-    val config = LocalMessageListConfig.current
-    val messageViewModel = LocalMessageListViewModel.current
-    val prevMessageIsAggregation = messageViewModel.checkPreviousMessageIsAggregation(index)
-    val nextMessageIsAggregation = messageViewModel.checkNextMessageIsAggregation(index)
-    val timeString = messageViewModel.getMessageTimeString(index)
-//    val prevMessageIsAggregation = false
-//    val nextMessageIsAggregation = false
-
-    val isSelf = message.isSelf
-    val isShowSelfAvatar = config.isShowRightAvatar
-    val isShowSelfNickname = config.isShowRightNickname
-    val isShowOtherAvatar = config.isShowLeftAvatar
-    val isShowOtherNickname = config.isShowLeftNickname
-    val isShowTimeMessage = config.isShowTimeMessage
-    val isShowTimeInBubble = config.isShowTimeInBubble
-    val isShowSystemMessage = config.isShowSystemMessage
-    val isShowUnsupportMessage = config.isShowUnsupportMessage
-    val cellSpacing = config.cellSpacing
-    val avatarSpacing = config.avatarSpacing
-    val isShowUserInfo = when {
-        isSelf -> isShowSelfAvatar || isShowSelfNickname
-        else -> isShowOtherAvatar || isShowOtherNickname
-    }
-    val isShowAvatar = when {
-        isSelf -> isShowSelfAvatar
-        else -> isShowOtherAvatar
-    }
-    val isShowNickname = when {
-        isSelf -> isShowSelfNickname
-        else -> isShowOtherNickname
-    }
-
-    val topPadding = if (prevMessageIsAggregation) 2.dp else cellSpacing
-    val bottomPadding = if (nextMessageIsAggregation) 2.dp else cellSpacing
-    CompositionLocalProvider(LocalMessage provides message) {
-
-        val renderer = MessageRendererRegistry.getRenderer(message)
-        if (!isShowSystemMessage) {
-            if (message.messageType == MessageType.SYSTEM) {
-                Box {}
-                return@CompositionLocalProvider
-            }
-        }
-        if (!isShowUnsupportMessage) {
-            if (renderer is DefaultMessageRenderer) {
-                Box {}
-                return@CompositionLocalProvider
-            }
-        }
-        if (renderer.showMessageMeta()) {
-
-            val arrangement = when (config.alignment) {
-                MessageAlignment.LEFT -> Arrangement.Start
-                MessageAlignment.RIGHT -> Arrangement.End
-                else -> if (message.isSelf) Arrangement.End else Arrangement.Start
-            }
-
-            Column(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .padding(top = topPadding, bottom = bottomPadding)
-            ) {
-                if (!timeString.isNullOrEmpty() && isShowTimeMessage) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 20.dp - topPadding, bottom = 20.dp - bottomPadding),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                            text = timeString,
-                            fontSize = 14.sp,
-                            color = colors.textColorSecondary,
-                            fontWeight = FontWeight.W400
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = arrangement,
-                    verticalAlignment = Alignment.Bottom,
-                ) {
-                    val statusContent = @Composable {
-                        MessageStatusContent(modifier = Modifier.align(Alignment.CenterVertically))
-                    }
-                    val messageContent = @Composable {
-                        MessageContent(nextMessageIsAggregation)
-                    }
-                    val userInfo = @Composable {
-                        UserInfoColumn(
-                            isShowAvatar = isShowAvatar,
-                            isShowNickname = isShowNickname,
-                            nextMessageIsAggregation = nextMessageIsAggregation,
-                            isStart = when (config.alignment) {
-                                MessageAlignment.LEFT -> true
-                                MessageAlignment.RIGHT -> false
-                                else -> !message.isSelf
-                            }
-                        ) { onUserClick(message.sender) }
-                    }
-                    val spacer = @Composable { Spacer(Modifier.width(avatarSpacing)) }
-
-                    val components = when (config.alignment) {
-                        MessageAlignment.TWO_SIDED -> {
-                            if (isSelf) {
-                                listOf(statusContent, messageContent) +
-                                        (if (isShowUserInfo) listOf(spacer, userInfo) else emptyList())
-                            } else {
-                                (if (isShowUserInfo) listOf(userInfo, spacer) else emptyList()) +
-                                        listOf(messageContent, statusContent)
-                            }
-                        }
-
-                        MessageAlignment.RIGHT -> {
-                            listOf(statusContent, messageContent) +
-                                    (if (isShowUserInfo) listOf(spacer, userInfo) else emptyList())
-                        }
-
-                        MessageAlignment.LEFT -> {
-                            (if (isShowUserInfo) listOf(userInfo, spacer) else emptyList()) +
-                                    listOf(messageContent, statusContent)
-                        }
-                    }
-
-                    components.forEach { it() }
-                }
-            }
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 10.dp)
-            ) {
-                renderer.Render(message)
-            }
-        }
-    }
-}
-
-@Composable
-private fun UserInfoColumn(
-    isShowAvatar: Boolean,
-    isShowNickname: Boolean,
-    nextMessageIsAggregation: Boolean,
-    isStart: Boolean,
-    onUserClick: () -> Unit,
-) {
-    val colors = LocalTheme.current.colors
-    val message = LocalMessage.current
-    Column(
-        modifier = Modifier.clickable(indication = null, interactionSource = null) {
-            onUserClick()
-        },
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalAlignment = if (isStart) Alignment.Start else Alignment.End
-    ) {
-        if (isShowNickname && !nextMessageIsAggregation) {
-            Text(
-                text = message.senderDisplayName,
-                fontSize = 12.sp,
-                overflow = TextOverflow.Ellipsis,
-                maxLines = 1,
-                color = colors.textColorSecondary
-            )
-        }
-        if (isShowAvatar) {
-            Avatar(nextMessageIsAggregation) {
-                onUserClick()
-            }
-        }
-    }
-}
-
-@Composable
-fun Avatar(isAggregation: Boolean = false, onClick: () -> Unit) {
-    val message = LocalMessage.current
-    val faceUrl = message.rawMessage?.faceUrl
-    val title = message.sender?.takeIf { it.isNotEmpty() }?.first()?.uppercase() ?: ""
-    Box(modifier = Modifier) {
-        if (isAggregation) {
-            Spacer(Modifier.size(32.dp))
-        } else {
-            Avatar(url = faceUrl, name = title, size = AvatarSize.S) {
-                onClick()
-            }
-        }
-    }
-}
-
-@SuppressLint("UnusedBoxWithConstraintsScope")
-@Composable
-fun MessageContent(isAggregation: Boolean = false, enableGesture: Boolean = true) {
-    val config = LocalMessageListConfig.current
-    val customActions = LocalCustomActions.current
-    val message = LocalMessage.current
-    val colors = LocalTheme.current.colors
-    val viewModel = LocalMessageListViewModel.current
-    var showActionDialog by remember { mutableStateOf(false) }
-
-    val normalRadius = 16.dp
-    val smallRadius = 1.dp
-    val bottomStartRadius = if (isAggregation) {
-        normalRadius
-    } else {
-        when (config.alignment) {
-            MessageAlignment.LEFT -> smallRadius
-            MessageAlignment.RIGHT -> normalRadius
-            else -> if (message.isSelf) normalRadius else smallRadius
-        }
-    }
-
-    val bottomEndRadius = if (isAggregation) {
-        normalRadius
-    } else {
-        when (config.alignment) {
-            MessageAlignment.LEFT -> normalRadius
-            MessageAlignment.RIGHT -> smallRadius
-            else -> if (message.isSelf) smallRadius else normalRadius
-        }
-    }
-
-    val onMessageLongPress = {
-        if (enableGesture) {
-            showActionDialog = true
-        }
-    }
-
-    val shape = RoundedCornerShape(normalRadius, normalRadius, bottomEndRadius, bottomStartRadius)
-    BoxWithConstraints(
-        modifier = Modifier
-            .pointerInput(showActionDialog) {
-                if (enableGesture) {
-                    detectTapGestures(
-                        onLongPress = {
-                            onMessageLongPress()
                         },
+                    state = listState,
+                    reverseLayout = true,
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    if (messageListViewModel.loadingState.isLoadingNewer) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = colors.textColorSecondary,
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        }
+                    }
+
+                    itemsIndexed(
+                        items = messageList,
+                        key = { _, item -> item.msgID!! }
+                    ) { index, message ->
+                        MessageItem(
+                            modifier = Modifier.animateItem(),
+                            index = index,
+                            message = message,
+                            onUserLongPress = {
+                                EventBus.post {
+                                    mapOf(
+                                        "source" to "MessageList",
+                                        "event" to "onUserLongPress",
+                                        "userID" to it,
+                                        "message" to message
+                                    )
+                                }
+                            }, onUserClick = {
+                                onUserClick(it ?: "")
+                            })
+                    }
+
+                    if (messageListViewModel.loadingState.isLoadingOlder) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = colors.textColorSecondary,
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (isMultiSelectMode) {
+                    MultiSelectBottomBar(
+                        selectedCount = selectedMessages.size,
+                        onCancel = { messageListViewModel.exitMultiSelectMode() },
+                        onDelete = {
+                            if (selectedMessages.isNotEmpty()) {
+                                showDeleteDialog = true
+                            }
+                        },
+                        onForward = {
+                            if (selectedMessages.isNotEmpty()) {
+                                val hasFailedMessage = selectedMessages.any { it.status != MessageStatus.SEND_SUCCESS }
+                                if (hasFailedMessage) {
+                                    Toast.error(context, context.getString(R.string.message_list_forward_failed_tip))
+                                    return@MultiSelectBottomBar
+                                }
+                                forwardingMessages = selectedMessages.toList()
+                                showForwardTypeSheet = true
+                            }
+                        }
                     )
                 }
             }
-            .clip(shape)
-            .highlightBackground(
-                highlightKey = message.msgID ?: "",
-                color = if (message.isSelf) colors.bgColorBubbleOwn else colors.bgColorBubbleReciprocal,
-                shape = shape
-            )) {
-        Box(
-            modifier = Modifier
-                .widthIn(max = maxWidth * 0.9f)
-        ) {
-            CompositionLocalProvider(
-                LocalMessageInteraction provides MessageInteraction(
-                    onClick = {},
-                    onLongPress = onMessageLongPress
-                )
-            ) {
-                val renderer = MessageRendererRegistry.getRenderer(message)
-                renderer.Render(message)
+
+            ActionSheet(
+                isVisible = showForwardTypeSheet,
+                options = listOf(
+                    ActionItem(
+                        text = stringResource(R.string.message_list_forward_by_separate),
+                        value = MessageForwardType.SEPARATE
+                    ),
+                    ActionItem(
+                        text = stringResource(R.string.message_list_forward_by_merge),
+                        value = MessageForwardType.MERGED
+                    )
+                ),
+                onDismiss = {
+                    showForwardTypeSheet = false
+                }) {
+                val selectedForwardType = it.value as MessageForwardType
+                if (selectedForwardType == MessageForwardType.SEPARATE && forwardingMessages.size > forwardMessageCountLimit) {
+                    Toast.error(context, context.getString(R.string.message_list_forward_oneByOne_limit_number_tip))
+                    showForwardTypeSheet = false
+                    return@ActionSheet
+                }
+                messageListViewModel.forwardType = selectedForwardType
+                showForwardTypeSheet = false
+                showForwardDialog = true
             }
-        }
-    }
+            if (showForwardDialog) {
+                ForwardTargetSelector(
+                    onDismiss = {
+                        showForwardDialog = false
+                        messageListViewModel.clearSingleMessageForward()
+                    },
+                    onConfirm = { conversationIDList ->
+                        showForwardDialog = false
+                        val messagesToForward = forwardingMessages.toList()
+                        if (isMultiSelectMode) {
+                            messageListViewModel.exitMultiSelectMode()
+                        }
+                        messageListViewModel.forwardMessages(
+                            messageList = messagesToForward,
+                            conversationIDList = conversationIDList,
+                            completion = object : CompletionHandler {
+                                override fun onSuccess() {
+                                    messageListViewModel.clearSingleMessageForward()
+                                }
 
-    if (showActionDialog) {
-        val actionItems = viewModel.getActions(message, config)
-        if (actionItems.isEmpty() && customActions.isEmpty()) {
-            showActionDialog = false
-        } else {
-            ActionDialogBackground()
-            FullScreenDialog(
-                onDismissRequest = { showActionDialog = false },
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { showActionDialog = false }, contentAlignment = Alignment.Center
-                ) {
-                    val horizontalPadding = when (config.alignment) {
-                        MessageAlignment.LEFT -> 64.dp
-                        MessageAlignment.RIGHT -> 64.dp
-                        else -> if (message.isSelf) 16.dp else 64.dp
+                                override fun onFailure(code: Int, desc: String) {
+                                    messageListViewModel.clearSingleMessageForward()
+                                }
+                            }
+                        )
                     }
-                    val alignment = when (config.alignment) {
-                        MessageAlignment.LEFT -> Alignment.Start
-                        MessageAlignment.RIGHT -> Alignment.End
-                        else -> if (message.isSelf) Alignment.End else Alignment.Start
-                    }
+                )
+            }
+            MessageReadReceiptDialog(
+                isVisible = readReceiptMessage != null,
+                message = readReceiptMessage,
+                onDismiss = {
+                    messageListViewModel.clearReadReceiptDialog()
+                },
+                onUserClick = { userID ->
+                    onUserClick(userID)
+                }
+            )
+            AlertDialog(
+                isVisible = showDeleteDialog,
+                onDismiss = { showDeleteDialog = false },
+                message = stringResource(R.string.message_list_delete_messages_tips),
+                onCancel = {
+                    showDeleteDialog = false
+                },
+                onConfirm = {
+                    messageListViewModel.deleteSelectedMessages()
+                    messageListViewModel.exitMultiSelectMode()
+                    showDeleteDialog = false
+                })
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = horizontalPadding),
-                        horizontalAlignment = alignment,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+            if (longPressActionMessage != null) {
+                val actionItems = messageListViewModel.getActions(longPressActionMessage!!)
+                val customActions = LocalCustomActions.current
+                if (actionItems.isEmpty() && customActions.isEmpty()) {
+                    messageListViewModel.clearLongPressActionDialog()
+                } else {
+                    ActionDialogBackground()
+                    FullScreenDialog(
+                        onDismissRequest = { messageListViewModel.clearLongPressActionDialog() },
                     ) {
-                        MessageContent(isAggregation, enableGesture = false)
-                        MessageActions() {
-                            showActionDialog = false
+                        Box(
+                            modifier = Modifier
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { messageListViewModel.clearLongPressActionDialog() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val startPadding = when (config.alignment) {
+                                MessageAlignment.LEFT -> 64.dp
+                                MessageAlignment.RIGHT -> 16.dp
+                                else -> if (longPressActionMessage!!.isSelf) 16.dp else 64.dp
+                            }
+                            val endPadding = when (config.alignment) {
+                                MessageAlignment.LEFT -> 16.dp
+                                MessageAlignment.RIGHT -> 64.dp
+                                else -> 16.dp
+                            }
+                            val alignment = when (config.alignment) {
+                                MessageAlignment.LEFT -> Alignment.Start
+                                MessageAlignment.RIGHT -> Alignment.End
+                                else -> if (longPressActionMessage!!.isSelf) Alignment.End else Alignment.Start
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = startPadding, end = endPadding),
+                                horizontalAlignment = alignment,
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                if (config.isSupportReaction && longPressActionMessage!!.status == MessageStatus.SEND_SUCCESS) {
+                                    ReactionEmojiPicker(
+                                        onEmojiClick = { emoji ->
+                                            val isReacted =
+                                                longPressActionMessage?.reactionList?.any { it.reactionID == emoji.key && it.reactedByMyself }
+                                            if (isReacted == true) {
+                                                messageListViewModel.removeMessageReaction(
+                                                    longPressActionMessage!!,
+                                                    emoji.key
+                                                )
+                                            } else {
+                                                messageListViewModel.addMessageReaction(
+                                                    longPressActionMessage!!,
+                                                    emoji.key
+                                                )
+                                                RecentEmojiManager.updateRecentEmoji(emoji.key)
+                                            }
+                                            messageListViewModel.clearLongPressActionDialog()
+                                        },
+                                        onExpandClick = {
+                                            messageListViewModel.showEmojiPicker(longPressActionMessage!!)
+                                            messageListViewModel.clearLongPressActionDialog()
+                                        }
+                                    )
+                                }
+
+                                // Limit message content height to prevent overflow
+                                val maxContentHeight = LocalWindowInfo.current.containerSize.let {
+                                    with(LocalDensity.current) {
+                                        it.height.toDp()
+                                    }
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .heightIn(max = maxContentHeight * 0.4f)
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    MessageContent(longPressActionMessage!!, false, enableGesture = false)
+                                }
+
+                                MessageActions(longPressActionMessage!!) {
+                                    messageListViewModel.clearLongPressActionDialog()
+                                }
+                            }
                         }
                     }
+                }
+            }
+
+            ReactionDetailSheet(
+                isVisible = reactionDetailMessage != null,
+                reactionList = reactionDetailMessage?.reactionList ?: emptyList(),
+                currentUserID = messageListViewModel.getCurrentUserID(),
+                onDismiss = { messageListViewModel.clearReactionDetail() },
+                onFetchUsers = { reactionID -> messageListViewModel.fetchReactionUsers(reactionID) },
+                onRemoveReaction = { reactionID ->
+                    reactionDetailMessage?.let { message ->
+                        messageListViewModel.removeMessageReaction(message, reactionID)
+                    }
+                    messageListViewModel.clearReactionDetail()
+                }
+            )
+
+            if (showReactionEmojiPickerForMessage != null) {
+                ReactionEmojiPickerSheet(
+                    onDismiss = { messageListViewModel.clearEmojiPicker() },
+                    onEmojiClick = { emoji ->
+                        val isReacted = showReactionEmojiPickerForMessage!!.reactionList.any {
+                            it.reactionID == emoji.key && it.reactedByMyself
+                        }
+                        if (isReacted) {
+                            messageListViewModel.removeMessageReaction(showReactionEmojiPickerForMessage!!, emoji.key)
+                        } else {
+                            messageListViewModel.addMessageReaction(showReactionEmojiPickerForMessage!!, emoji.key)
+                            RecentEmojiManager.updateRecentEmoji(emoji.key)
+                        }
+                        messageListViewModel.clearEmojiPicker()
+                    }
+                )
+            }
+
+            // Auxiliary Text Forward handling (ASR / Translation)
+            val auxiliaryTextForwardContent by messageListViewModel.auxiliaryTextForwardContent.collectAsState()
+
+            if (auxiliaryTextForwardContent != null) {
+                ForwardTargetSelector(
+                    onDismiss = {
+                        messageListViewModel.clearAuxiliaryTextForward()
+                    },
+                    onConfirm = { conversationIDList ->
+                        val textToForward = auxiliaryTextForwardContent!!
+                        messageListViewModel.sendAuxiliaryTextToConversations(
+                            text = textToForward,
+                            conversationIDList = conversationIDList,
+                            completion = object : CompletionHandler {
+                                override fun onSuccess() {
+                                    messageListViewModel.clearAuxiliaryTextForward()
+                                }
+
+                                override fun onFailure(code: Int, desc: String) {
+                                    messageListViewModel.clearAuxiliaryTextForward()
+                                }
+                            }
+                        )
+                    }
+                )
+            }
+
+            // Handle scroll to bottom after ASR conversion success
+            val shouldScrollToBottomAfterAsr by messageListViewModel.shouldScrollToBottomAfterAsr.collectAsState()
+            LaunchedEffect(shouldScrollToBottomAfterAsr) {
+                if (shouldScrollToBottomAfterAsr) {
+                    delay(100) // Wait for UI update
+                    animateScrollToEnd()
+                    messageListViewModel.clearScrollToBottomAfterAsr()
                 }
             }
         }
@@ -634,15 +660,15 @@ private fun ActionDialogBackground() {
     }
 }
 
+
 @Composable
-fun MessageActions(onActionClick: () -> Unit) {
-    val message = LocalMessage.current
+fun MessageActions(message: MessageInfo, onActionClick: () -> Unit) {
     val config = LocalMessageListConfig.current
     val customActions = LocalCustomActions.current
     val viewModel = LocalMessageListViewModel.current
     val context = LocalContext.current
     var currentPage by remember { mutableStateOf(0) }
-    val allItems = viewModel.getActions(message, config) + customActions.map {
+    val allItems = viewModel.getActions(message) + customActions.map {
         MessageUIAction(
             name = it.title,
             icon = it.iconResID,
@@ -730,53 +756,5 @@ fun MessageAction(
 
 }
 
-@Composable
-fun MessageStatusContent(modifier: Modifier = Modifier) {
-    var viewModel: MessageListViewModel = viewModel()
-    val message = LocalMessage.current
-    val colors = LocalTheme.current.colors
-    val activity = LocalActivity.current
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        if (message.status == MessageStatus.SEND_FAIL) {
-            var showResendTips by remember { mutableStateOf(false) }
-            Box(
-                modifier = Modifier
-                    .padding(6.dp)
-                    .clickable {
-                        showResendTips = true
-                    }) {
-                Text(
-                    modifier = Modifier
-                        .size(14.dp)
-                        .background(color = colors.textColorError, shape = RoundedCornerShape(8.dp))
-                        .padding(horizontal = 5.dp)
-                        .clip(CircleShape)
-                        .wrapContentSize(),
-                    text = "!",
-                    color = colors.textColorButton,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.W600
-                )
-            }
-            AlertDialog(
-                isVisible = showResendTips,
-                message = stringResource(R.string.messaeg_list_resend_tips),
-                onDismiss = { showResendTips = false },
-                onCancel = { showResendTips = false },
-                onConfirm = { viewModel.retrySendMessage(activity, message) })
-        } else if (message.status == MessageStatus.SENDING) {
-            Box(
-                modifier = Modifier
-                    .padding(6.dp)
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(12.dp),
-                    color = colors.textColorAntiSecondary,
-                    strokeWidth = 1.5.dp
-                )
-            }
-        }
-    }
-}
+
+

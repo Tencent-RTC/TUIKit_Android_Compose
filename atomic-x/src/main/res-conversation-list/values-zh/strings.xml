@@ -8,4 +8,7 @@
     <string name="conversation_list_mark_unread">标为未读</string>
     <string name="conversation_list_mark_read">标为已读</string>
     <string name="conversation_list_message_count_unit">条</string>
+    <string name="conversation_list_draft_prefix">[草稿]</string>
+    <string name="conversation_list_at_all_prefix">[@所有人]</string>
+    <string name="conversation_list_at_me_prefix">[有人@我]</string>
 </resources>

@@ -7,5 +7,6 @@
     <string name="conversation_list_mark_unread">標為未讀</string>
     <string name="conversation_list_mark_read">標為已讀</string>
     <string name="conversation_list_message_count_unit">條</string>
+    <string name="conversation_list_draft_prefix">[草稿]</string>
 
 </resources>

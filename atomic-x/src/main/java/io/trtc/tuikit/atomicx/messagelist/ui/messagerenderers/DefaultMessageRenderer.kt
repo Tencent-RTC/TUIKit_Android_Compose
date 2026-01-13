@@ -12,7 +12,7 @@ import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageRenderer
 import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 
-class DefaultMessageRenderer : MessageRenderer<MessageInfo> {
+class DefaultMessageRenderer : MessageRenderer {
     @Composable
     override fun Render(message: MessageInfo) {
         val colors = LocalTheme.current.colors

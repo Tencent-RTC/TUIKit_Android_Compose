@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="video_recorder_empty"></string>
+    <string name="video_recorder_empty">""</string>
     <string name="video_recorder_torch">手電筒</string>
     <string name="video_recorder_aspect">比例</string>
     <string name="video_recorder_beauty">美顏</string>

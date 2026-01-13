@@ -1,8 +1,9 @@
 package io.trtc.tuikit.atomicx.albumpicker.interfaces;
 
-import android.net.Uri
+import io.trtc.tuikit.atomicx.albumpicker.AlbumPickerModel
 
 interface AlbumPickerListener {
-    fun onPicked(result: List<Pair<Uri, Boolean>>)
-    fun onCanceled()
+    fun onFinishedSelect(count: Int)
+
+    fun onProgress(model: AlbumPickerModel, index: Int, progress: Double)
 }

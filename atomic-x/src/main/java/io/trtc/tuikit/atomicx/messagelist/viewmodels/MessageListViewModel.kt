@@ -1,9 +1,6 @@
 package io.trtc.tuikit.atomicx.messagelist.viewmodels
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
-import android.content.Context.CLIPBOARD_SERVICE
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,47 +15,56 @@ import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.audioplayer.AudioPlayer
 import io.trtc.tuikit.atomicx.audioplayer.AudioPlayerListener
 import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Toast
+import io.trtc.tuikit.atomicx.basecomponent.config.AppBuilderConfig
+import io.trtc.tuikit.atomicx.basecomponent.utils.appContext
 import io.trtc.tuikit.atomicx.imageviewer.ImageElement
 import io.trtc.tuikit.atomicx.imageviewer.ImageViewer
+import io.trtc.tuikit.atomicx.messagelist.config.ChatMessageListConfig
 import io.trtc.tuikit.atomicx.messagelist.config.MessageListConfigProtocol
-import io.trtc.tuikit.atomicx.messagelist.ui.MessageRendererRegistry
-import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.CreateGroupMessageRenderer
-import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.FaceMessageRenderer
-import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.FileMessageRenderer
-import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.ImageMessageRenderer
-import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.SoundMessageRenderer
-import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.SystemMessageRenderer
-import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.TextMessageRenderer
-import io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers.VideoMessageRenderer
+import io.trtc.tuikit.atomicx.messagelist.ui.AudioPlayingState
+import io.trtc.tuikit.atomicx.messagelist.utils.AuxiliaryTextVisibilityStore
+import io.trtc.tuikit.atomicx.messagelist.utils.ClipboardUtils
+import io.trtc.tuikit.atomicx.messagelist.utils.DateTimeUtils.getIntervalSeconds
+import io.trtc.tuikit.atomicx.messagelist.utils.DateTimeUtils.getTimeString
 import io.trtc.tuikit.atomicx.messagelist.utils.FileUtils
-import io.trtc.tuikit.atomicx.messagelist.utils.collectAsState
+import io.trtc.tuikit.atomicx.messagelist.utils.TranslationTextParser
+import io.trtc.tuikit.atomicx.messagelist.utils.buildForwardAbstractItem
+import io.trtc.tuikit.atomicx.messagelist.utils.getMessageTypeAbstract
+import io.trtc.tuikit.atomicx.messagelist.utils.isGroupChat
+import io.trtc.tuikit.atomicx.messagelist.utils.isGroupConversation
+import io.trtc.tuikit.atomicx.messagelist.utils.senderDisplayName
 import io.trtc.tuikit.atomicx.videoplayer.VideoData
 import io.trtc.tuikit.atomicx.videoplayer.VideoPlayer
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
 import io.trtc.tuikit.atomicxcore.api.conversation.ConversationListStore
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationMarkType
+import io.trtc.tuikit.atomicxcore.api.login.LoginStore
+import io.trtc.tuikit.atomicxcore.api.message.MergedForwardInfo
 import io.trtc.tuikit.atomicxcore.api.message.MessageActionStore
+import io.trtc.tuikit.atomicxcore.api.message.MessageBody
+import io.trtc.tuikit.atomicxcore.api.message.MessageEvent
 import io.trtc.tuikit.atomicxcore.api.message.MessageFetchDirection
 import io.trtc.tuikit.atomicxcore.api.message.MessageFetchOption
+import io.trtc.tuikit.atomicxcore.api.message.MessageForwardOption
+import io.trtc.tuikit.atomicxcore.api.message.MessageForwardType
 import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 import io.trtc.tuikit.atomicxcore.api.message.MessageInputStore
-import io.trtc.tuikit.atomicxcore.api.message.MessageListChangeReason
 import io.trtc.tuikit.atomicxcore.api.message.MessageListStore
 import io.trtc.tuikit.atomicxcore.api.message.MessageMediaFileType
 import io.trtc.tuikit.atomicxcore.api.message.MessageStatus
 import io.trtc.tuikit.atomicxcore.api.message.MessageType
+import io.trtc.tuikit.atomicxcore.api.message.OfflinePushInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-import kotlin.math.abs
+import org.json.JSONObject
 
 data class MessageUIAction(
     var name: String,
@@ -67,31 +73,31 @@ data class MessageUIAction(
     var action: (MessageInfo) -> Unit
 )
 
-data class AudioPlayingState(
-    val isPlaying: Boolean = false,
-    val playingMessageId: String? = null,
-    val playPosition: Int = 0
-)
-
 data class LoadingState(
     val isLoadingOlder: Boolean = false,
     val isLoadingNewer: Boolean = false
 )
 
-var messageAggregationTime: Int = 300
+const val messageAggregationTime: Int = 300
+const val forwardMessageCountLimit = 30
 
 class MessageListViewModel(
     private val messageListStore: MessageListStore,
-    private val messageActionStore: MessageActionStore,
-    var locateMessage: MessageInfo?
+    var locateMessage: MessageInfo? = null,
+    private val messageListConfig: MessageListConfigProtocol = ChatMessageListConfig()
 ) : ViewModel() {
+    val conversationID = messageListStore.conversationID
     val conversationListStore = ConversationListStore.create()
+    val conversationListState = conversationListStore.conversationListState
     val messageListState = messageListStore.messageListState
-    val messageListChangeSource by collectAsState(messageListState.messageListChangeReason)
+    val messageEvent = messageListStore.messageEventFlow
     val messageInputStore = MessageInputStore.create(messageListStore.conversationID)
+
+    private val auxiliaryTextVisibilityStore = AuxiliaryTextVisibilityStore()
+
     val messageList =
-        messageListState.messageList.map {
-            it.asReversed().filter { item -> !item.msgID.isNullOrEmpty() }
+        messageListState.messageList.map { list ->
+            list.asReversed().filter { item -> !item.msgID.isNullOrEmpty() }
                 .distinctBy { item -> item.msgID }
         }.stateIn(
             scope = viewModelScope,
@@ -99,10 +105,10 @@ class MessageListViewModel(
             initialValue = emptyList()
         )
 
-    val hasMoreOlderMessage by collectAsState(messageListState.hasMoreOlderMessage)
-    val hasMoreNewerMessage by collectAsState(messageListState.hasMoreNewerMessage)
+    val hasMoreOlderMessage = messageListState.hasMoreOlderMessage
+    val hasMoreNewerMessage = messageListState.hasMoreNewerMessage
 
-    var audioPlayingState by mutableStateOf(AudioPlayingState())
+    var audioPlayingState = mutableStateOf(AudioPlayingState())
         private set
 
     var loadingState by mutableStateOf(LoadingState())
@@ -110,27 +116,55 @@ class MessageListViewModel(
 
     private var audioPlayer: AudioPlayer? = null
 
+    private val _isMultiSelectMode = MutableStateFlow(false)
+    val isMultiSelectMode: StateFlow<Boolean> = _isMultiSelectMode.asStateFlow()
+
+    private val _selectedMessages = MutableStateFlow<Set<MessageInfo>>(emptySet())
+    val selectedMessages: StateFlow<Set<MessageInfo>> = _selectedMessages.asStateFlow()
+
+    private val _onSingleMessageForward = MutableStateFlow<MessageInfo?>(null)
+    val onSingleMessageForward: StateFlow<MessageInfo?> = _onSingleMessageForward.asStateFlow()
+
+    private val _longPressActionMessage = MutableStateFlow<MessageInfo?>(null)
+    val longPressActionMessage: StateFlow<MessageInfo?> = _longPressActionMessage.asStateFlow()
+
+    private val _readReceiptMessage = MutableStateFlow<MessageInfo?>(null)
+    val readReceiptMessage: StateFlow<MessageInfo?> = _readReceiptMessage.asStateFlow()
+
+    // Auxiliary text (ASR / Translation) state management
+    private val _processingAuxiliaryTextMessageIds = MutableStateFlow<Set<String>>(emptySet())
+    val processingAuxiliaryTextMessageIds: StateFlow<Set<String>> = _processingAuxiliaryTextMessageIds.asStateFlow()
+
+    val hiddenAuxiliaryTextMessageIds: StateFlow<Set<String>> = auxiliaryTextVisibilityStore.hiddenMessageIds
+
+    private val _asrTextMenuMessage = MutableStateFlow<MessageInfo?>(null)
+    val asrTextMenuMessage: StateFlow<MessageInfo?> = _asrTextMenuMessage.asStateFlow()
+
+    var forwardType = MessageForwardType.SEPARATE
 
     init {
-        MessageRendererRegistry.registerRenderer(MessageType.TEXT, TextMessageRenderer())
-        MessageRendererRegistry.registerRenderer(MessageType.FILE, FileMessageRenderer())
-        MessageRendererRegistry.registerRenderer(MessageType.IMAGE, ImageMessageRenderer())
-        MessageRendererRegistry.registerRenderer(MessageType.VIDEO, VideoMessageRenderer())
-        MessageRendererRegistry.registerRenderer(MessageType.SOUND, SoundMessageRenderer())
-        MessageRendererRegistry.registerRenderer(MessageType.FACE, FaceMessageRenderer())
-        MessageRendererRegistry.registerRenderer(MessageType.SYSTEM, SystemMessageRenderer())
-        MessageRendererRegistry.registerCustomMessageRenderer(
-            "group_create",
-            CreateGroupMessageRenderer()
-        )
         viewModelScope.launch {
-            messageListState.messageListChangeReason.collect {
-                if (it == MessageListChangeReason.FETCH_MESSAGES) {
-                    delay(100)
-                    locateMessage = null
+            messageEvent.collect { event ->
+                when (event) {
+                    is MessageEvent.FetchMessages -> {
+                        fetchMessageReactions(event.messageList)
+                        delay(100)
+                        locateMessage = null
+                    }
+
+                    is MessageEvent.FetchMoreMessages -> {
+                        fetchMessageReactions(event.messageList)
+                    }
+
+                    is MessageEvent.RecvMessage -> {
+                        fetchMessageReactions(listOf(event.message))
+                    }
+
+                    else -> {}
                 }
             }
         }
+        conversationListStore.fetchConversationInfo(messageListStore.conversationID)
         messageListStore.fetchMessageList(
             MessageFetchOption(
                 message = locateMessage,
@@ -139,32 +173,22 @@ class MessageListViewModel(
                 } else {
                     MessageFetchDirection.OLDER
                 },
-            ), object : CompletionHandler {
-                override fun onSuccess() {
-                    Log.i("MessageListViewModel", "fetchMessages success")
-                }
-
-                override fun onFailure(code: Int, desc: String) {
-                    Log.i("MessageListViewModel", "fetchMessages failed: $code, $desc")
-                }
-            })
+            )
+        )
     }
 
     override fun onCleared() {
         destroyAudioPlayer()
+        auxiliaryTextVisibilityStore.clear()
     }
 
     fun clearMessageReadCount() {
-        conversationListStore.clearConversationUnreadCount(
-            conversationID = messageListStore.conversationID,
-            object : CompletionHandler {
-                override fun onSuccess() {
-
-                }
-
-                override fun onFailure(code: Int, desc: String) {
-                }
-            })
+        conversationListStore.clearConversationUnreadCount(messageListStore.conversationID)
+        conversationListStore.markConversation(
+            listOf(messageListStore.conversationID),
+            ConversationMarkType.UNREAD,
+            false
+        )
     }
 
     fun initializeAudioPlayer() {
@@ -172,23 +196,23 @@ class MessageListViewModel(
             audioPlayer = AudioPlayer.create().apply {
                 setListener(object : AudioPlayerListener {
                     override fun onPlay() {
-                        audioPlayingState = audioPlayingState.copy(isPlaying = true)
+                        audioPlayingState.value = audioPlayingState.value.copy(isPlaying = true)
                     }
 
                     override fun onPause() {
-                        audioPlayingState = audioPlayingState.copy(isPlaying = false)
+                        audioPlayingState.value = audioPlayingState.value.copy(isPlaying = false)
                     }
 
                     override fun onProgressUpdate(currentPosition: Int, duration: Int) {
-                        audioPlayingState = audioPlayingState.copy(playPosition = currentPosition)
+                        audioPlayingState.value = audioPlayingState.value.copy(playPosition = currentPosition)
                     }
 
                     override fun onResume() {
-                        audioPlayingState = audioPlayingState.copy(isPlaying = true)
+                        audioPlayingState.value = audioPlayingState.value.copy(isPlaying = true)
                     }
 
                     override fun onCompletion() {
-                        audioPlayingState = AudioPlayingState()
+                        audioPlayingState.value = AudioPlayingState()
                     }
                 })
             }
@@ -199,19 +223,19 @@ class MessageListViewModel(
         val soundPath = message.messageBody?.soundPath
         if (soundPath != null && audioPlayer != null) {
             when {
-                audioPlayingState.isPlaying && audioPlayingState.playingMessageId == message.msgID -> {
+                audioPlayingState.value.isPlaying && audioPlayingState.value.playingMessageId == message.msgID -> {
                     audioPlayer?.pause()
                 }
 
-                !audioPlayingState.isPlaying && audioPlayingState.playingMessageId == message.msgID -> {
+                !audioPlayingState.value.isPlaying && audioPlayingState.value.playingMessageId == message.msgID -> {
                     audioPlayer?.resume()
                 }
 
                 else -> {
-                    if (audioPlayingState.isPlaying) {
+                    if (audioPlayingState.value.isPlaying) {
                         audioPlayer?.stop()
                     }
-                    audioPlayingState = audioPlayingState.copy(playingMessageId = message.msgID)
+                    audioPlayingState.value = audioPlayingState.value.copy(playingMessageId = message.msgID)
                     audioPlayer?.play(soundPath)
                 }
             }
@@ -221,60 +245,129 @@ class MessageListViewModel(
     fun destroyAudioPlayer() {
         audioPlayer?.stop()
         audioPlayer = null
-        audioPlayingState = AudioPlayingState()
+        audioPlayingState.value = AudioPlayingState()
     }
 
-    fun isMessagePlaying(messageId: String): Boolean {
-        return audioPlayingState.isPlaying && audioPlayingState.playingMessageId == messageId
-    }
 
     @Composable
-    fun getActions(messageInfo: MessageInfo, config: MessageListConfigProtocol): List<MessageUIAction> {
+    fun getActions(messageInfo: MessageInfo): List<MessageUIAction> {
+        // Get the latest message from messageList to ensure we have updated asrText/translatedText
+        val latestMessage = messageList.value
+            .find { it.msgID == messageInfo.msgID } ?: messageInfo
+        val messageActionStore = MessageActionStore.create(latestMessage)
         val context = LocalContext.current
         val actions = mutableListOf<MessageUIAction>()
-        if (messageInfo.messageType == MessageType.TEXT && config.isSupportCopy) {
+
+        if (messageListConfig.isSupportMultiSelect) {
+            actions.add(
+                MessageUIAction(
+                    name = context.getString(R.string.message_list_menu_multi_select),
+                    icon = R.drawable.message_list_menu_multi_select_icon,
+                    action = {
+                        enterMultiSelectMode(messageInfo)
+                    }
+                )
+            )
+        }
+
+        if (messageListConfig.isSupportForward && messageInfo.status == MessageStatus.SEND_SUCCESS) {
+            actions.add(
+                MessageUIAction(
+                    name = context.getString(R.string.message_list_menu_forward),
+                    icon = R.drawable.message_list_menu_forward_icon,
+                    action = { messageInfo ->
+                        _onSingleMessageForward.value = messageInfo
+                    }
+                )
+            )
+        }
+
+        if (latestMessage.messageType == MessageType.TEXT && messageListConfig.isSupportCopy) {
             actions.add(
                 MessageUIAction(
                     name = context.getString(R.string.message_list_menu_copy),
                     icon = R.drawable.message_list_menu_copy_icon,
-                    action = { messageInfo ->
-                        val clipboard =
-                            context.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                        clipboard.setPrimaryClip(
-                            ClipData.newPlainText(
-                                "Copied Text",
-                                messageInfo.messageBody?.text
-                            )
-                        )
+                    action = { msg ->
+                        ClipboardUtils.copyText(context, "Copied Text", msg.messageBody?.text)
                     })
             )
         }
-        if (messageInfo.isSelf) {
+        if (latestMessage.isSelf && messageInfo.status == MessageStatus.SEND_SUCCESS) {
             val currentTime = System.currentTimeMillis()
-            val messageTime = messageInfo.timestamp ?: 0L
+            val messageTime = latestMessage.timestamp ?: 0L
             val timeDifferenceSeconds = (currentTime - messageTime * 1000) / 1000
 
-            if (timeDifferenceSeconds <= 120 && config.isSupportRecall) {
+            if (timeDifferenceSeconds <= 120 && messageListConfig.isSupportRecall) {
                 actions.add(
                     MessageUIAction(
                         name = context.getString(R.string.message_list_menu_recall),
                         icon = R.drawable.message_list_menu_recall_icon,
-                        action = { messageInfo ->
-                            messageActionStore.recallMessage(messageInfo)
+                        action = {
+                            messageActionStore.recallMessage()
                         })
                 )
             }
         }
-        if (config.isSupportDelete) {
+        if (messageListConfig.isSupportDelete) {
             actions.add(
                 MessageUIAction(
                     name = context.getString(R.string.message_list_menu_delete),
                     dangerousAction = true,
                     icon = R.drawable.message_list_menu_delete_icon,
-                    action = { messageInfo ->
-                        messageActionStore.deleteMessage(messageInfo)
+                    action = {
+                        messageActionStore.deleteMessage()
                     })
             )
+        }
+
+        if (latestMessage.isSelf && latestMessage.needReadReceipt && isGroupChat(conversationID) && messageInfo.status == MessageStatus.SEND_SUCCESS) {
+            actions.add(
+                MessageUIAction(
+                    name = context.getString(R.string.message_list_menu_info),
+                    icon = R.drawable.message_list_menu_info_icon,
+                    action = { msg ->
+                        showReadReceiptDialog(msg)
+                    }
+                )
+            )
+        }
+
+        // Voice to Text menu item
+        if (latestMessage.messageType == MessageType.SOUND && latestMessage.status == MessageStatus.SEND_SUCCESS) {
+            val asrText = latestMessage.messageBody?.asrText
+            val msgID = latestMessage.msgID ?: ""
+            val isHidden = isAsrTextHidden(msgID)
+            // Show menu item if asrText is empty or hidden
+            if (asrText.isNullOrEmpty() || isHidden) {
+                actions.add(
+                    MessageUIAction(
+                        name = context.getString(R.string.message_list_menu_convert_to_text),
+                        icon = R.drawable.message_list_menu_convert_icon,
+                        action = { msg ->
+                            convertVoiceToText(msg)
+                        }
+                    )
+                )
+            }
+        }
+
+        // Text Translation menu item
+        if (latestMessage.messageType == MessageType.TEXT && latestMessage.status == MessageStatus.SEND_SUCCESS) {
+            val translatedText = latestMessage.messageBody?.translatedText
+            val msgID = latestMessage.msgID ?: ""
+            val isHidden = isTranslationHidden(msgID)
+            // Show menu item if translatedText is empty or hidden
+            if (translatedText.isNullOrEmpty() || isHidden) {
+                actions.add(
+                    MessageUIAction(
+                        name = context.getString(R.string.message_list_menu_translate),
+                        icon = R.drawable.message_list_menu_translate_icon,
+                        action = { msg ->
+                            translateText(msg)
+                        }
+                    )
+                )
+            }
         }
 
         return actions
@@ -282,7 +375,7 @@ class MessageListViewModel(
 
 
     fun loadMoreOlderMessage() {
-        if (loadingState.isLoadingOlder || !hasMoreOlderMessage) {
+        if (loadingState.isLoadingOlder || !hasMoreOlderMessage.value) {
             return
         }
 
@@ -301,19 +394,17 @@ class MessageListViewModel(
     }
 
     fun loadMoreNewerMessage() {
-        if (loadingState.isLoadingNewer || !hasMoreNewerMessage) {
+        if (loadingState.isLoadingNewer || !hasMoreNewerMessage.value) {
             return
         }
 
         loadingState = loadingState.copy(isLoadingNewer = true)
         messageListStore.fetchMoreMessageList(MessageFetchDirection.NEWER, object : CompletionHandler {
             override fun onSuccess() {
-                Log.e("MessageList", "loadMoreNewerMessage success")
                 loadingState = loadingState.copy(isLoadingNewer = false)
             }
 
             override fun onFailure(code: Int, desc: String) {
-                Log.e("MessageList", "loadMoreNewerMessage failure " + code + " " + desc)
                 loadingState = loadingState.copy(isLoadingNewer = false)
             }
         })
@@ -333,48 +424,26 @@ class MessageListViewModel(
             })
     }
 
-    fun downloadImage(messageInfo: MessageInfo) {
+    fun downloadThumbImage(messageInfo: MessageInfo) {
         messageListStore.downloadMessageResource(
             messageInfo,
-            MessageMediaFileType.THUMB_IMAGE,
-            object : CompletionHandler {
-                override fun onSuccess() {
-
-                }
-
-                override fun onFailure(code: Int, desc: String) {
-                }
-            })
+            MessageMediaFileType.THUMB_IMAGE
+        )
     }
-
 
     fun downloadSound(messageInfo: MessageInfo) {
         messageListStore.downloadMessageResource(
             messageInfo,
-            MessageMediaFileType.SOUND,
-            object : CompletionHandler {
-                override fun onSuccess() {
-
-                }
-
-                override fun onFailure(code: Int, desc: String) {
-                }
-            })
+            MessageMediaFileType.SOUND
+        )
     }
 
 
     fun downloadVideoSnapShot(messageInfo: MessageInfo) {
         messageListStore.downloadMessageResource(
             messageInfo,
-            MessageMediaFileType.VIDEO_SNAPSHOT,
-            object : CompletionHandler {
-                override fun onSuccess() {
-
-                }
-
-                override fun onFailure(code: Int, desc: String) {
-                }
-            })
+            MessageMediaFileType.VIDEO_SNAPSHOT
+        )
     }
 
 
@@ -425,13 +494,11 @@ class MessageListViewModel(
         return null
     }
 
-    private fun getIntervalSeconds(timeStamp1: Long?, timeStamp2: Long?): Long {
-        if (timeStamp1 == null || timeStamp2 == null) return 0L
-        if (timeStamp1 == 0L || timeStamp2 == 0L) return 0L
-        return abs(timeStamp2 - timeStamp1)
-    }
-
     fun retrySendMessage(context: Context?, message: MessageInfo) {
+        if (message.offlinePushInfo == null) {
+            message.offlinePushInfo = createOfflinePushInfoForConversation(conversationID, message)
+        }
+
         messageInputStore.sendMessage(message, object : CompletionHandler {
             override fun onSuccess() {
             }
@@ -442,52 +509,126 @@ class MessageListViewModel(
         })
     }
 
-    private fun getTimeString(timeStamp: Long?): String? {
-        val date = timeStamp?.let { Date(it) }
-        if (date == null) return null
-        if (date.time == 0L) return null
-
-        val calendar = Calendar.getInstance()
-        val customCalendar = Calendar.getInstance()
-        customCalendar.firstDayOfWeek = Calendar.SATURDAY
-
-        val now = Date()
-        customCalendar.time = now
-        val nowYear = customCalendar.get(Calendar.YEAR)
-        val nowMonth = customCalendar.get(Calendar.MONTH)
-        val nowWeekOfMonth = customCalendar.get(Calendar.WEEK_OF_MONTH)
-        val nowDay = customCalendar.get(Calendar.DAY_OF_MONTH)
-
-        customCalendar.time = date
-        val dateYear = customCalendar.get(Calendar.YEAR)
-        val dateMonth = customCalendar.get(Calendar.MONTH)
-        val dateWeekOfMonth = customCalendar.get(Calendar.WEEK_OF_MONTH)
-        val dateDay = customCalendar.get(Calendar.DAY_OF_MONTH)
-
-        val dateFmt: DateFormat
-
-        if (nowYear == dateYear) {
-            if (nowMonth == dateMonth) {
-                if (nowWeekOfMonth == dateWeekOfMonth) {
-                    if (nowDay == dateDay) {
-                        dateFmt = SimpleDateFormat("HH:mm", Locale.getDefault())
-                    } else {
-                        val locale = Locale.getDefault()
-                        dateFmt = SimpleDateFormat("EEEE", locale)
-                    }
-                } else {
-                    dateFmt = SimpleDateFormat("MM/dd", Locale.getDefault())
-                }
-            } else {
-                dateFmt = SimpleDateFormat("MM/dd", Locale.getDefault())
-            }
+    private fun enterMultiSelectMode(initialMessage: MessageInfo? = null) {
+        _isMultiSelectMode.value = true
+        if (initialMessage != null) {
+            _selectedMessages.value = setOf(initialMessage)
         } else {
-            dateFmt = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
+            _selectedMessages.value = emptySet()
         }
-
-        return dateFmt.format(date)
     }
 
+    fun exitMultiSelectMode() {
+        _isMultiSelectMode.value = false
+        _selectedMessages.value = emptySet()
+    }
+
+    fun toggleMessageSelection(message: MessageInfo) {
+        val currentSet = _selectedMessages.value
+        _selectedMessages.value = if (currentSet.contains(message)) {
+            currentSet - message
+        } else {
+            currentSet + message
+        }
+    }
+
+    fun clearSingleMessageForward() {
+        _onSingleMessageForward.value = null
+    }
+
+    fun showReadReceiptDialog(message: MessageInfo) {
+        _readReceiptMessage.value = message
+    }
+
+    fun clearReadReceiptDialog() {
+        _readReceiptMessage.value = null
+    }
+
+    fun showLongPressActionDialog(message: MessageInfo) {
+        _longPressActionMessage.value = message
+    }
+
+    fun clearLongPressActionDialog() {
+        _longPressActionMessage.value = null
+    }
+
+    fun forwardMessages(
+        messageList: List<MessageInfo>,
+        conversationIDList: List<String>,
+        completion: CompletionHandler? = null
+    ) {
+        // Sort messages by their order in the UI message list (older messages first)
+        val currentMessageList = this.messageList.value
+        val messageIdToIndex = currentMessageList.withIndex().associate { it.value.msgID to it.index }
+        val sortedMessageList = messageList.sortedByDescending { messageIdToIndex[it.msgID] ?: Int.MAX_VALUE }
+
+        conversationIDList.forEach { tempConversationID ->
+
+            val mergedForwardInfo = when (forwardType) {
+                MessageForwardType.MERGED -> MergedForwardInfo(
+                    title = getForwardMessageTitle(sortedMessageList) ?: "",
+                    abstractList = getAbstractList(sortedMessageList),
+                    compatibleText = appContext.getString(R.string.message_list_forward_compatible_text),
+                    needReadReceipt = AppBuilderConfig.enableReadReceipt,
+                    supportExtension = false,
+                    offlinePushInfo = createOfflinePushInfoForMultiConversation(
+                        appContext.getString(R.string.message_list_message_type_merged), tempConversationID
+                    )
+                )
+
+                else -> null
+            }
+            sortedMessageList.forEach {
+                it.needReadReceipt = AppBuilderConfig.enableReadReceipt
+                it.supportExtension = false
+                it.offlinePushInfo =
+                    createOfflinePushInfoForMultiConversation(getMessageTypeAbstract(it), tempConversationID)
+            }
+            messageListStore.forwardMessages(
+                messageList = sortedMessageList,
+                forwardOption = MessageForwardOption(
+                    forwardType = forwardType,
+                    mergedForwardInfo = mergedForwardInfo,
+                ),
+                conversationID = tempConversationID,
+                completion = completion
+            )
+
+        }
+    }
+
+    private fun getForwardMessageTitle(messageList: List<MessageInfo>): String? {
+        return if (isGroupConversation(messageListStore.conversationID)) {
+            appContext.getString(R.string.message_list_forward_chats)
+        } else {
+            val loginUserInfo = LoginStore.shared.loginState.loginUserInfo.value
+            val selfName = loginUserInfo?.nickname ?: loginUserInfo?.userID ?: ""
+
+            val chatName = conversationListState.conversationList.value
+                .firstOrNull { it.conversationID == messageListStore.conversationID }
+                ?.title ?: run {
+                val firstMessage = messageList.firstOrNull()
+                if (firstMessage?.isSelf == true) {
+                    firstMessage.receiver ?: firstMessage.rawMessage?.userID ?: ""
+                } else {
+                    firstMessage?.senderDisplayName ?: ""
+                }
+            }
+
+            selfName + appContext.getString(R.string.message_list_and_text) + chatName + appContext.getString(
+                R.string.message_list_forward_chats_c2c
+            )
+        }
+    }
+
+    private fun getAbstractList(messageList: List<MessageInfo>): List<String> {
+        val messages = messageList.take(3)
+        return messages.map { message ->
+            val userName = message.senderDisplayName
+            val messageAbstract = getMessageTypeAbstract(message)
+            buildForwardAbstractItem(userName, messageAbstract)
+        }
+    }
 
     fun downloadOrShowVideo(context: Context, messageInfo: MessageInfo) {
         viewModelScope.launch {
@@ -520,10 +661,13 @@ class MessageListViewModel(
                 }
             } catch (e: Exception) {
                 Log.e("MessageListViewModel", "Error in downloadOrShowVideo", e)
-                withContext(Dispatchers.Main) {
-                }
+
             }
         }
+    }
+
+    fun deleteSelectedMessages() {
+        messageListStore.deleteMessages(selectedMessages.value.toList())
     }
 
     private fun showVideoFromPath(context: Context, messageInfo: MessageInfo, videoPath: String) {
@@ -608,6 +752,450 @@ class MessageListViewModel(
                 height = message.messageBody?.originalImageHeight ?: 0
             )
         }
+    }
+
+    fun sendReadReceipts(messages: List<MessageInfo>) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val filteredMessages = messages.filter { message ->
+                    !message.isSelf && message.needReadReceipt
+                }
+
+                if (filteredMessages.isNotEmpty()) {
+                    messageListStore.sendMessageReadReceipts(filteredMessages)
+                }
+            }
+        }
+    }
+
+    // region Reaction
+
+    private val _reactionDetailMessage = MutableStateFlow<MessageInfo?>(null)
+    val reactionDetailMessage: StateFlow<MessageInfo?> = _reactionDetailMessage.asStateFlow()
+
+    private val _showEmojiPickerForMessage = MutableStateFlow<MessageInfo?>(null)
+    val showEmojiPickerForMessage: StateFlow<MessageInfo?> = _showEmojiPickerForMessage.asStateFlow()
+
+    private var currentReactionActionStore: MessageActionStore? = null
+
+    fun getCurrentUserID(): String? {
+        return LoginStore.shared.loginState.loginUserInfo.value?.userID
+    }
+
+    fun fetchMessageReactions(messages: List<MessageInfo>) {
+        if (!messageListConfig.isSupportReaction) return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                messageListStore.fetchMessageReactions(messages, 10)
+            }
+        }
+    }
+
+    fun addMessageReaction(message: MessageInfo, reactionID: String) {
+        viewModelScope.launch {
+            val actionStore = MessageActionStore.create(message)
+            actionStore.addMessageReaction(reactionID, object : CompletionHandler {
+                override fun onSuccess() {
+                    Log.d("MessageListViewModel", "Add reaction success: $reactionID")
+                }
+
+                override fun onFailure(code: Int, desc: String) {
+                    Log.e("MessageListViewModel", "Add reaction failed: $code $desc")
+                }
+            })
+        }
+    }
+
+    fun removeMessageReaction(message: MessageInfo, reactionID: String) {
+        viewModelScope.launch {
+            val actionStore = MessageActionStore.create(message)
+            actionStore.removeMessageReaction(reactionID, object : CompletionHandler {
+                override fun onSuccess() {
+                    Log.d("MessageListViewModel", "Remove reaction success: $reactionID")
+                }
+
+                override fun onFailure(code: Int, desc: String) {
+                    Log.e("MessageListViewModel", "Remove reaction failed: $code $desc")
+                }
+            })
+        }
+    }
+
+    fun showReactionDetail(message: MessageInfo) {
+        _reactionDetailMessage.value = message
+        currentReactionActionStore = MessageActionStore.create(message)
+    }
+
+    fun clearReactionDetail() {
+        _reactionDetailMessage.value = null
+        currentReactionActionStore = null
+    }
+
+    fun fetchReactionUsers(reactionID: String) {
+        currentReactionActionStore?.fetchMessageReactionUsers(reactionID, 20, object : CompletionHandler {
+            override fun onSuccess() {
+                Log.d("MessageListViewModel", "Fetch reaction users success")
+            }
+
+            override fun onFailure(code: Int, desc: String) {
+                Log.e("MessageListViewModel", "Fetch reaction users failed: $code $desc")
+            }
+        })
+    }
+
+    fun showEmojiPicker(message: MessageInfo) {
+        _showEmojiPickerForMessage.value = message
+    }
+
+    fun clearEmojiPicker() {
+        _showEmojiPickerForMessage.value = null
+    }
+
+    // endregion
+
+    // region Voice to Text (ASR)
+
+    private val _shouldScrollToBottomAfterAsr = MutableStateFlow(false)
+    val shouldScrollToBottomAfterAsr: StateFlow<Boolean> = _shouldScrollToBottomAfterAsr.asStateFlow()
+
+    fun clearScrollToBottomAfterAsr() {
+        _shouldScrollToBottomAfterAsr.value = false
+    }
+
+    fun convertVoiceToText(message: MessageInfo) {
+        val msgID = message.msgID ?: return
+        if (_processingAuxiliaryTextMessageIds.value.contains(msgID)) return
+
+        // Check if this is the last message (first in reversed list)
+        val isLastMessage = messageList.value.firstOrNull()?.msgID == msgID
+
+        // Clear hidden state and start converting
+        auxiliaryTextVisibilityStore.unhide(msgID)
+        _processingAuxiliaryTextMessageIds.value = _processingAuxiliaryTextMessageIds.value + msgID
+
+        viewModelScope.launch {
+            val actionStore = MessageActionStore.create(message)
+            actionStore.convertVoiceToText("", object : CompletionHandler {
+                override fun onSuccess() {
+                    Log.d("MessageListViewModel", "Voice to text conversion success for $msgID")
+                    _processingAuxiliaryTextMessageIds.value = _processingAuxiliaryTextMessageIds.value - msgID
+
+                    // Trigger scroll to bottom if this was the last message
+                    if (isLastMessage) {
+                        _shouldScrollToBottomAfterAsr.value = true
+                    }
+                }
+
+                override fun onFailure(code: Int, desc: String) {
+                    Log.e("MessageListViewModel", "Voice to text conversion failed: $code $desc")
+                    _processingAuxiliaryTextMessageIds.value = _processingAuxiliaryTextMessageIds.value - msgID
+                    Toast.error(appContext, appContext.getString(R.string.message_list_convert_to_text_failed))
+                }
+            })
+        }
+    }
+
+    fun isMessageProcessingAuxiliaryText(msgID: String): Boolean {
+        return _processingAuxiliaryTextMessageIds.value.contains(msgID)
+    }
+
+    fun isAsrTextHidden(msgID: String): Boolean {
+        return auxiliaryTextVisibilityStore.isHidden(msgID)
+    }
+
+    fun hideAsrText(message: MessageInfo) {
+        val msgID = message.msgID ?: return
+        auxiliaryTextVisibilityStore.hide(msgID)
+        clearAsrTextMenu()
+    }
+
+    fun showAsrTextMenu(message: MessageInfo) {
+        _asrTextMenuMessage.value = message
+    }
+
+    fun clearAsrTextMenu() {
+        _asrTextMenuMessage.value = null
+    }
+
+    fun copyAsrText(message: MessageInfo, context: Context) {
+        val asrText = message.messageBody?.asrText ?: return
+        ClipboardUtils.copyText(context, "ASR Text", asrText)
+        Toast.success(context, context.getString(R.string.message_list_copied))
+        clearAsrTextMenu()
+    }
+
+    fun forwardAsrText(message: MessageInfo) {
+        val asrText = message.messageBody?.asrText
+        if (!asrText.isNullOrEmpty()) {
+            _auxiliaryTextForwardContent.value = asrText
+        }
+        clearAsrTextMenu()
+    }
+
+    // region Auxiliary Text Forward (ASR / Translation)
+
+    private val _auxiliaryTextForwardContent = MutableStateFlow<String?>(null)
+    val auxiliaryTextForwardContent: StateFlow<String?> = _auxiliaryTextForwardContent.asStateFlow()
+
+    fun clearAuxiliaryTextForward() {
+        _auxiliaryTextForwardContent.value = null
+    }
+
+    fun sendAuxiliaryTextToConversations(
+        text: String,
+        conversationIDList: List<String>,
+        completion: CompletionHandler? = null
+    ) {
+        viewModelScope.launch {
+            var successCount = 0
+            var failureCount = 0
+
+            for (conversationID in conversationIDList) {
+                val inputStore = MessageInputStore.create(conversationID)
+                val message = MessageInfo().apply {
+                    messageType = MessageType.TEXT
+                    messageBody = MessageBody().apply {
+                        this.text = text
+                    }
+                    needReadReceipt = AppBuilderConfig.enableReadReceipt
+                    offlinePushInfo = createOfflinePushInfoForConversation(conversationID, this)
+                }
+                inputStore.sendMessage(message, object : CompletionHandler {
+                    override fun onSuccess() {
+                        successCount++
+                        if (successCount + failureCount == conversationIDList.size) {
+                            if (failureCount == 0) {
+                                completion?.onSuccess()
+                            } else {
+                                completion?.onFailure(-1, "Some messages failed to send")
+                            }
+                        }
+                    }
+
+                    override fun onFailure(code: Int, desc: String) {
+                        failureCount++
+                        if (successCount + failureCount == conversationIDList.size) {
+                            completion?.onFailure(code, desc)
+                        }
+                    }
+                })
+            }
+        }
+    }
+
+    private val _shouldScrollToBottomAfterTranslation = MutableStateFlow(false)
+    val shouldScrollToBottomAfterTranslation: StateFlow<Boolean> = _shouldScrollToBottomAfterTranslation.asStateFlow()
+
+    fun clearScrollToBottomAfterTranslation() {
+        _shouldScrollToBottomAfterTranslation.value = false
+    }
+
+    fun translateText(message: MessageInfo) {
+        val msgID = message.msgID ?: return
+        if (_processingAuxiliaryTextMessageIds.value.contains(msgID)) return
+
+        // Check if this is the last message (first in reversed list)
+        val isLastMessage = messageList.value.firstOrNull()?.msgID == msgID
+
+        // Clear hidden state and start translating
+        auxiliaryTextVisibilityStore.unhide(msgID)
+        _processingAuxiliaryTextMessageIds.value = _processingAuxiliaryTextMessageIds.value + msgID
+
+        viewModelScope.launch {
+            val actionStore = MessageActionStore.create(message)
+            // Get text to translate
+            val text = message.messageBody?.text
+            if (text.isNullOrEmpty()) {
+                _processingAuxiliaryTextMessageIds.value = _processingAuxiliaryTextMessageIds.value - msgID
+                return@launch
+            }
+
+            // Parse text to separate emoji and @ from translatable text
+            val splitResult = TranslationTextParser.splitTextByEmojiAndAtUsers(text, null)
+            val textArray =
+                splitResult?.get(TranslationTextParser.KEY_SPLIT_STRING_TEXT) as? List<String> ?: emptyList()
+
+            // If nothing to translate (pure emoji/@ message), just show original
+            if (textArray.isEmpty()) {
+                _processingAuxiliaryTextMessageIds.value = _processingAuxiliaryTextMessageIds.value - msgID
+                if (isLastMessage) {
+                    _shouldScrollToBottomAfterTranslation.value = true
+                }
+                return@launch
+            }
+
+            val targetLanguage = AppBuilderConfig.translateTargetLanguage
+
+            actionStore.translateText(textArray, null, targetLanguage, object : CompletionHandler {
+                override fun onSuccess() {
+                    Log.d("MessageListViewModel", "Text translation success for $msgID")
+                    _processingAuxiliaryTextMessageIds.value = _processingAuxiliaryTextMessageIds.value - msgID
+                    // Trigger scroll to bottom if this was the last message
+                    if (isLastMessage) {
+                        _shouldScrollToBottomAfterTranslation.value = true
+                    }
+                }
+
+                override fun onFailure(code: Int, desc: String) {
+                    Log.e("MessageListViewModel", "Text translation failed: $code $desc")
+                    _processingAuxiliaryTextMessageIds.value = _processingAuxiliaryTextMessageIds.value - msgID
+                    Toast.error(appContext, appContext.getString(R.string.message_list_translate_failed))
+                }
+            })
+        }
+    }
+
+    fun isTranslationHidden(msgID: String): Boolean {
+        return auxiliaryTextVisibilityStore.isHidden(msgID)
+    }
+
+    fun hideTranslation(message: MessageInfo) {
+        val msgID = message.msgID ?: return
+        auxiliaryTextVisibilityStore.hide(msgID)
+    }
+
+    fun copyTranslatedText(message: MessageInfo, context: Context) {
+        val translatedText = getTranslatedDisplayText(message) ?: return
+        ClipboardUtils.copyText(context, "Translated Text", translatedText)
+        Toast.success(context, context.getString(R.string.message_list_copied))
+    }
+
+    fun forwardTranslatedText(message: MessageInfo) {
+        val translatedText = getTranslatedDisplayText(message)
+        if (!translatedText.isNullOrEmpty()) {
+            _auxiliaryTextForwardContent.value = translatedText
+        }
+    }
+
+    /**
+     * Get the translated display text for a message.
+     * This reconstructs the full translated text including emoji and @ mentions.
+     */
+    fun getTranslatedDisplayText(message: MessageInfo): String? {
+        val translatedTextMap = message.messageBody?.translatedText
+        if (translatedTextMap.isNullOrEmpty()) return null
+
+        val originalText = message.messageBody?.text ?: return null
+
+        // Parse original text to get structure
+        val splitResult = TranslationTextParser.splitTextByEmojiAndAtUsers(originalText, null)
+        val resultArray =
+            splitResult?.get(TranslationTextParser.KEY_SPLIT_STRING_RESULT) as? List<String> ?: return null
+        val textIndexArray = splitResult[TranslationTextParser.KEY_SPLIT_STRING_TEXT_INDEX] as? List<Int> ?: return null
+
+        // Reconstruct with translated text
+        return TranslationTextParser.replacedStringWithArray(resultArray, textIndexArray, translatedTextMap)
+    }
+
+    private fun createOfflinePushInfoForConversation(conversationID: String, message: MessageInfo): OfflinePushInfo {
+        val loginUserInfo = LoginStore.shared.loginState.loginUserInfo.value
+        val selfUserId = loginUserInfo?.userID.orEmpty()
+        val selfName = loginUserInfo?.nickname ?: selfUserId
+
+        val isGroup = isGroupConversation(conversationID)
+        val groupId = if (isGroup) conversationID.removePrefix("group_") else ""
+
+        val chatName = conversationListState.conversationList.value
+            .firstOrNull { it.conversationID == conversationID }
+            ?.title
+            ?.takeIf { it.isNotBlank() }
+
+        val title = if (isGroup) chatName ?: groupId else selfName
+        val description = trimPushDescription(getMessageTypeAbstract(message))
+
+        val ext = createOfflinePushExtJson(
+            isGroup = isGroup,
+            description = description,
+            senderId = if (isGroup) groupId else selfUserId,
+            senderNickName = title,
+            faceUrl = loginUserInfo?.avatarURL
+        )
+
+        val extensionInfo: Map<String, Any> = mapOf(
+            "ext" to ext,
+            "AndroidOPPOChannelID" to "tuikit",
+            "AndroidHuaWeiCategory" to "IM",
+            "AndroidVIVOCategory" to "IM",
+            "AndroidHonorImportance" to "NORMAL",
+            "AndroidMeizuNotifyType" to 1,
+            "iOSInterruptionLevel" to "time-sensitive",
+            "enableIOSBackgroundNotification" to false
+        )
+
+        return OfflinePushInfo(
+            title = title,
+            description = description,
+            extensionInfo = extensionInfo
+        )
+    }
+
+    private fun createOfflinePushInfoForMultiConversation(
+        description: String,
+        conversationID: String
+    ): OfflinePushInfo {
+
+        val loginUserInfo = LoginStore.shared.loginState.loginUserInfo.value
+        val selfUserId = loginUserInfo?.userID.orEmpty()
+
+        val title = loginUserInfo?.nickname ?: selfUserId
+        val isGroup = isGroupConversation(conversationID)
+        val groupId = if (isGroup) conversationID.removePrefix("group_") else ""
+
+        val ext = createOfflinePushExtJson(
+            isGroup = isGroup,
+            description = description,
+            senderId = if (isGroup) groupId else selfUserId,
+            senderNickName = title,
+            faceUrl = loginUserInfo?.avatarURL
+        )
+        val extensionInfo: Map<String, Any> = mapOf(
+            "ext" to ext,
+            "AndroidOPPOChannelID" to "tuikit",
+            "AndroidHuaWeiCategory" to "IM",
+            "AndroidVIVOCategory" to "IM",
+            "AndroidHonorImportance" to "NORMAL",
+            "AndroidMeizuNotifyType" to 1,
+            "iOSInterruptionLevel" to "time-sensitive",
+            "enableIOSBackgroundNotification" to false
+        )
+
+        return OfflinePushInfo(
+            title = title,
+            description = trimPushDescription(description),
+            extensionInfo = extensionInfo
+        )
+    }
+
+    private fun trimPushDescription(text: String, maxLength: Int = 50): String {
+        val normalized = text.trim().replace("\n", " ").replace("\r", " ")
+        if (normalized.length <= maxLength) return normalized
+        return normalized.substring(0, maxLength)
+    }
+
+    private fun createOfflinePushExtJson(
+        isGroup: Boolean,
+        description: String,
+        senderId: String,
+        senderNickName: String,
+        faceUrl: String?,
+    ): String {
+        val businessInfo = JSONObject().apply {
+            putOpt("content", description.takeIf { it.isNotEmpty() })
+            putOpt("sender", senderId)
+            putOpt("faceUrl", faceUrl)
+            putOpt("nickname", senderNickName)
+            putOpt("chatType", if (isGroup) 2 else 1)
+        }
+
+        val configInfo = JSONObject().apply {
+            putOpt("fcmPushType", 0)
+            putOpt("fcmNotificationType", 0)
+        }
+
+        return JSONObject()
+            .putOpt("entity", businessInfo)
+            .putOpt("timPushFeatures", configInfo)
+            .toString()
     }
 
 }

@@ -42,6 +42,7 @@
     <string name="message_list_message_type_voice">[تسجيل صوتي]</string>
     <string name="message_list_message_type_video">[فيديو]</string>
     <string name="message_list_message_type_file">[ملف]</string>
+    <string name="message_list_message_type_merged">[سجل المحادثة]</string>
     <string name="message_list_message_type_animate_emoji">[رمز تعبيري متحرك]</string>
     <string name="message_list_set_mute_all_format">%1$s تم تمكين الحظر الكلي للمستخدمين،</string>
     <string name="message_list_unmute_all_format">%1$s تم إلغاء الحظر الكلي للمستخدمين،</string>
@@ -74,5 +75,34 @@
     <string name="message_list_day_hour_min_second">%1$d يوم %2$d ساعة %3$d دقيقة %4$d ثانية</string>
 
     <string name="messaeg_list_resend_tips">هل أنت متأكد من إعادة الإرسال؟</string>
+
+    <string name="message_list_multi_select_count">تم اختيار %d</string>
+    <string name="message_list_multi_select_forward">إعادة توجيه</string>
+    <string name="message_list_forward_button_text">إعادة توجيه(%d)</string>
+    <string name="message_list_select_conversation">اختر المحادثة</string>
+    <string name="message_list_selected_conversations">تم اختيار %d محادثة</string>
+    <string name="message_list_delete_messages_tips">هل أنت متأكد من حذف الرسائل المحددة؟</string>
+    <string name="message_list_forward_by_merge">إعادة توجيه مجمعة</string>
+    <string name="message_list_forward_by_separate">إعادة توجيه فردية</string>
+    <string name="message_list_forward_oneByOne_limit_number_tip">عدد الرسائل كبير جدًا، إعادة التوجيه الفردية غير مدعومة</string>
+    <string name="message_list_forward_failed_tip">لا يمكن إعادة توجيه الرسائل الفاشلة!</string>
+    <string name="message_list_forward_chat_record">سجل المحادثة</string>
+    <string name="message_list_forward_chats">سجل محادثة المجموعة</string>
+    <string name="message_list_and_text">و</string>
+    <string name="message_list_forward_chats_c2c">سجل محادثة</string>
+    <string name="message_list_recent_conversations">المحادثات الأخيرة</string>
+    <string name="message_list_forward_compatible_text">إعادة توجيه الرسائل المجمعة غير مدعومة. يرجى الترقية إلى أحدث إصدار.</string>
+
+    <string name="message_list_menu_convert_to_text">تحويل إلى نص</string>
+    <string name="message_list_menu_hide">إخفاء</string>
+    <string name="message_list_convert_to_text_failed">فشل التحويل</string>
+    <string name="message_list_copied">تم النسخ</string>
+
+    <string name="message_list_menu_translate">ترجمة</string>
+    <string name="message_list_translate_failed">فشل الترجمة</string>
+    <string name="message_list_translate_default_tips">الترجمة مدعومة من Tencent Cloud IM</string>
+
+    <string name="message_list_violation_send_failed">يحتوي على محتوى حساس، فشل الإرسال</string>
+    <string name="message_list_violation_received">يحتوي على محتوى حساس</string>
 
 </resources>

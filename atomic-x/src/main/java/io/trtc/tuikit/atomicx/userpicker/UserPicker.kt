@@ -389,7 +389,7 @@ private fun <T> pushSelectionState(
 }
 
 @Composable
-private fun SelectionCheckBox(
+fun SelectionCheckBox(
     checked: Boolean,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,

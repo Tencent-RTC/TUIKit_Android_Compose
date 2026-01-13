@@ -55,10 +55,10 @@ android {
 
 dependencies {
 
-    api("io.trtc.uikit:atomicx-core:3.5.0.954")
+    api("io.trtc.uikit:atomicx-core:3.6+")
     api("com.tencent.imsdk:imsdk-plus:latest.release")
     api("com.tencent.liteav:LiteAVSDK_Professional:12.8.0.19279")
-    
+
     implementation("org.ahocorasick:ahocorasick:0.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("com.google.code.gson:gson:2.10.1")
@@ -73,7 +73,9 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-dash:1.6.1")
     implementation("androidx.media3:media3-ui:1.6.1")
     implementation("androidx.media3:media3-ui-compose:1.6.1")
-    implementation(libs.tuicore)
+    implementation(libs.tuicore) {
+        exclude("com.tencent.imsdk", "imsdk-plus")
+    }
     implementation(libs.com.tencent.mmkv)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.core.ktx)

@@ -8,10 +8,10 @@
     <string name="compose_demo_logout">Logout</string>
     <string name="compose_demo_language">Language</string>
     <string name="compose_demo_theme">Theme</string>
-    <string name="compose_demo_zh_hans">Simple Chinese</string>
+    <string name="compose_demo_zh_hans">简体中文</string>
+    <string name="compose_demo_zh_hant">繁體中文</string>
     <string name="compose_demo_en">English</string>
-    <string name="compose_demo_ar">Arabic</string>
-    <string name="compose_demo_zh_hant">Traditional Chinese</string>
+    <string name="compose_demo_ar">عربي</string>
     <string name="compose_demo_current_language">English</string>
     <string name="compose_demo_about_sdk_version">SDK Version</string>
     <string name="compose_demo_about_im">About</string>
@@ -41,4 +41,9 @@
     <string name="compose_demo_self_detail_edit_nickname_placeholder">Please enter nickname</string>
     <string name="compose_demo_self_detail_edit_status_title">Set status</string>
     <string name="compose_demo_self_detail_edit_status_placeholder">What\'s on your mind</string>
+    <string name="compose_demo_style">Appearance</string>
+    <string name="compose_demo_message_read_receipt">Message Read Receipt</string>
+    <string name="compose_demo_message_read_receipt_enabled_desc">If disabled, the message read status is hidden for all your messages and for all the messages sent by members in a chat.</string>
+    <string name="compose_demo_message_read_receipt_disabled_desc">If enabled, the message read status is displayed for all your messages and for all the messages sent by members in a chat.</string>
+    <string name="compose_demo_translate_target_language">Translate To</string>
 </resources>

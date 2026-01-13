@@ -10,6 +10,7 @@ import io.trtc.tuikit.atomicx.videorecorder.VideoRecorderConfig;
 import io.trtc.tuikit.atomicx.videorecorder.VideoQuality;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderFileUtil;
 import io.trtc.tuikit.atomicx.videorecorder.utils.VideoRecorderResourceUtils;
+import io.trtc.tuikit.atomicx.basecomponent.theme.ThemeState;
 
 public class VideoRecorderConfigInternal {
 
@@ -24,6 +25,7 @@ public class VideoRecorderConfigInternal {
     private final int mRecordMode = RecordMode.MIXED.getValue();
     private JsonObject mJsonObject;
     private VideoRecorderConfig mConfig;
+    private String primaryThemeColor;
 
     public static VideoRecorderConfigInternal getInstance() {
         if (sInstance == null) {
@@ -83,10 +85,15 @@ public class VideoRecorderConfigInternal {
         return getBoolFromJsonObject("support_record_scroll_filter", true);
     }
 
+    public void setThemeColor(String color) {
+        primaryThemeColor = color;
+    }
+
     public int getThemeColor() {
-        if (mConfig != null && mConfig.getPrimaryColor() != null) {
-            return VideoRecorderResourceUtils.parseRGB(mConfig.getPrimaryColor());
+        if (this.primaryThemeColor != null) {
+            return VideoRecorderResourceUtils.parseRGB(primaryThemeColor);
         }
+
         String  primaryColor = getStringFromJsonObject("primary_theme_color", DEFAULT_PRIMARY_THEME_COLOR);
         return VideoRecorderResourceUtils.parseRGB(primaryColor);
     }

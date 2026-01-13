@@ -37,7 +37,6 @@ android {
 }
 
 dependencies {
-
     implementation(project(":atomic-x"))
     implementation(project(":uikit"))
 

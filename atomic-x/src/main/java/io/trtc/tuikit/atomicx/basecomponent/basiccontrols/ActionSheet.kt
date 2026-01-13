@@ -7,13 +7,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -29,7 +33,7 @@ data class ActionItem(
     val text: String,
     val isDestructive: Boolean = false,
     val isEnabled: Boolean = true,
-    val value: Any?,
+    val value: Any? = null,
 )
 
 @Composable
@@ -40,6 +44,13 @@ fun ActionSheet(
     onActionSelected: (ActionItem) -> Unit,
 ) {
     val colors = LocalTheme.current.colors
+    val configuration = LocalConfiguration.current
+    val screenHeightDp = configuration.screenHeightDp.dp
+    val cancelButtonHeight = 70.dp
+    val bottomPadding = 20.dp
+    val maxOptionsHeight = screenHeightDp * 0.8f - cancelButtonHeight - bottomPadding
+    val scrollState = rememberScrollState()
+
     if (isVisible) {
         Dialog(
             onDismissRequest = onDismiss,
@@ -53,32 +64,36 @@ fun ActionSheet(
                 modifier = Modifier
                     .fillMaxSize()
                     .clickable(indication = null, interactionSource = null) { onDismiss() }
-                    .padding(horizontal = 8.dp), verticalArrangement = Arrangement.Bottom
+                    .padding(horizontal = 8.dp),
+                verticalArrangement = Arrangement.Bottom
             ) {
-
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxOptionsHeight),
                     shape = RoundedCornerShape(14.dp),
                     color = colors.bgColorBubbleReciprocal
                 ) {
-                    Column {
-                        options.forEachIndexed { index, option ->
-                            ActionItem(
-                                option = option,
-                                onClick = {
-                                    if (option.isEnabled) {
-                                        onDismiss()
-                                        onActionSelected(option)
+                    Column(
+                        modifier = Modifier.verticalScroll(scrollState)
+                    ) {
+                            options.forEachIndexed { index, option ->
+                                ActionSheetItem(
+                                    option = option,
+                                    onClick = {
+                                        if (option.isEnabled) {
+                                            onDismiss()
+                                            onActionSelected(option)
+                                        }
                                     }
-                                }
-                            )
-
-                            if (index < options.size - 1) {
-                                HorizontalDivider(
-                                    thickness = 1.dp,
-                                    color = colors.strokeColorPrimary
                                 )
-                            }
+
+                                if (index < options.size - 1) {
+                                    HorizontalDivider(
+                                        thickness = 1.dp,
+                                        color = colors.strokeColorPrimary
+                                    )
+                                }
                         }
                     }
                 }
@@ -112,7 +127,7 @@ fun ActionSheet(
 }
 
 @Composable
-private fun ActionItem(
+private fun ActionSheetItem(
     option: ActionItem,
     onClick: () -> Unit
 ) {
@@ -138,4 +153,3 @@ private fun ActionItem(
             .padding(vertical = 16.dp)
     )
 }
-

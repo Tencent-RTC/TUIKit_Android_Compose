@@ -232,7 +232,7 @@ fun rememberEmojiKeyToName(text: String): String {
     }
 }
 
-private fun replaceEmojiKeysWithNames(text: String): String {
+fun replaceEmojiKeysWithNames(text: String): String {
     if (text.isEmpty()) return text
 
     val emojiList = EmojiManager.littleEmojiList

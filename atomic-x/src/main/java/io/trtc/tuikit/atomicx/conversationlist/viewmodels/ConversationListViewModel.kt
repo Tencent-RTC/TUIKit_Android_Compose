@@ -1,28 +1,29 @@
 package io.trtc.tuikit.atomicx.conversationlist.viewmodels
 
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.conversationlist.config.ConversationActionConfigProtocol
-import io.trtc.tuikit.atomicx.conversationlist.model.ConversationActionType
 import io.trtc.tuikit.atomicx.conversationlist.model.ConversationMenuAction
-import io.trtc.tuikit.atomicx.messagelist.utils.collectAsState
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
 import io.trtc.tuikit.atomicxcore.api.conversation.ConversationFetchOption
 import io.trtc.tuikit.atomicxcore.api.conversation.ConversationInfo
 import io.trtc.tuikit.atomicxcore.api.conversation.ConversationListStore
+import io.trtc.tuikit.atomicxcore.api.conversation.ConversationMarkType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-class ConversationListViewModel(val conversationListStore: ConversationListStore) : ViewModel() {
+class ConversationListViewModel(
+    val conversationListStore: ConversationListStore,
+    val conversationActionConfig: ConversationActionConfigProtocol
+) : ViewModel() {
     val conversationListState = conversationListStore.conversationListState
-    val hasMoreConversation by collectAsState(conversationListState.hasMoreConversation)
-    val conversationList by collectAsState(
+    val hasMoreConversation = conversationListState.hasMoreConversation
+    val conversationList =
         conversationListState.conversationList.map { list ->
             list.filter { item ->
                 item.conversationID.isNotEmpty()
@@ -32,7 +33,6 @@ class ConversationListViewModel(val conversationListStore: ConversationListStore
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
-    )
     private var _selectedConversations: MutableStateFlow<LinkedHashSet<ConversationInfo>> =
         MutableStateFlow(linkedSetOf())
     val selectedConversations = _selectedConversations.asStateFlow()
@@ -69,111 +69,79 @@ class ConversationListViewModel(val conversationListStore: ConversationListStore
 
     fun getActions(
         conversationInfo: ConversationInfo,
-        config: ConversationActionConfigProtocol
     ): List<ConversationMenuAction> {
 
         val pinAction = ConversationMenuAction().apply {
             if (conversationInfo.isPinned) {
                 titleResID = R.string.conversation_list_unpin
-                type = ConversationActionType.UNPIN
+                action = {
+                    unpinConversation(conversationInfo)
+                }
             } else {
                 titleResID = R.string.conversation_list_pin
-                type = ConversationActionType.PIN
+                action = {
+                    pinConversation(conversationInfo)
+                }
             }
 
         }
         val clearAction = ConversationMenuAction(
             titleResID = R.string.conversation_list_clear,
-            type = ConversationActionType.CLEAR_MESSAGE
+            action = {
+                clearMessage(conversationInfo)
+            }
         )
         val deleteAction = ConversationMenuAction(
             titleResID = R.string.conversation_list_delete,
             dangerous = true,
-            type = ConversationActionType.DELETE
+            action = {
+                deleteConversation(conversationInfo)
+            }
         )
         return mutableListOf<ConversationMenuAction>().apply {
-            if (config.isSupportPin) {
+            if (conversationActionConfig.isSupportPin) {
                 add(pinAction)
             }
-            if (config.isSupportClearHistory) {
+            if (conversationActionConfig.isSupportClearHistory) {
                 add(clearAction)
             }
-            if (config.isSupportDelete) {
+            if (conversationActionConfig.isSupportDelete) {
                 add(deleteAction)
             }
         }
     }
 
-    fun setConversationAction(
-        conversationInfo: ConversationInfo,
-        actionType: ConversationActionType
-    ) {
-        when (actionType) {
-            ConversationActionType.DELETE -> {
-                conversationListStore.deleteConversation(
-                    conversationInfo.conversationID,
-                    object : CompletionHandler {
-                        override fun onSuccess() {
-                        }
+    fun deleteConversation(conversationInfo: ConversationInfo) {
+        conversationListStore.deleteConversation(conversationInfo.conversationID)
+    }
 
-                        override fun onFailure(code: Int, desc: String) {
-                        }
-                    })
-            }
+    fun pinConversation(conversationInfo: ConversationInfo) {
+        conversationListStore.pinConversation(conversationInfo.conversationID, true)
+    }
 
-            ConversationActionType.PIN -> {
-                conversationListStore.pinConversation(
-                    conversationInfo.conversationID,
-                    true,
-                    object : CompletionHandler {
-                        override fun onSuccess() {
-                        }
+    fun unpinConversation(conversationInfo: ConversationInfo) {
+        conversationListStore.pinConversation(conversationInfo.conversationID, false)
+    }
 
-                        override fun onFailure(code: Int, desc: String) {
-                        }
-                    })
-            }
+    fun clearMessage(conversationInfo: ConversationInfo) {
+        conversationListStore.clearConversationMessages(conversationInfo.conversationID)
+    }
 
-            ConversationActionType.UNPIN -> {
-                conversationListStore.pinConversation(
-                    conversationInfo.conversationID,
-                    false,
-                    object : CompletionHandler {
-                        override fun onSuccess() {
-                        }
+    fun clearUnreadCount(conversationInfo: ConversationInfo) {
+        conversationListStore.clearConversationUnreadCount(conversationInfo.conversationID)
+        conversationListStore.markConversation(
+            listOf(conversationInfo.conversationID),
+            ConversationMarkType.UNREAD,
+            false
+        )
+    }
 
-                        override fun onFailure(code: Int, desc: String) {
-                        }
-                    })
-            }
-
-            ConversationActionType.CLEAR_MESSAGE -> {
-                conversationListStore.clearConversationMessages(
-                    conversationInfo.conversationID,
-                    object : CompletionHandler {
-                        override fun onSuccess() {
-                        }
-
-                        override fun onFailure(code: Int, desc: String) {
-                        }
-                    })
-            }
-
-            ConversationActionType.CLEAR_UNREAD_COUNT -> {
-                conversationListStore.clearConversationUnreadCount(
-                    conversationInfo.conversationID,
-                    object : CompletionHandler {
-                        override fun onSuccess() {
-                        }
-
-                        override fun onFailure(code: Int, desc: String) {
-                        }
-                    })
-            }
-
-            else -> {}
-        }
-
+    fun markAsUnRead(conversationInfo: ConversationInfo) {
+        conversationListStore.markConversation(
+            listOf(conversationInfo.conversationID),
+            ConversationMarkType.UNREAD,
+            true
+        )
     }
 
     fun loadMoreConversation() {

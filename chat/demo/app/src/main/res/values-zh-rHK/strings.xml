@@ -9,10 +9,6 @@
     <string name="compose_demo_logout">登出</string>
     <string name="compose_demo_language">語言</string>
     <string name="compose_demo_theme">主題</string>
-    <string name="compose_demo_zh_hans">簡體中文</string>
-    <string name="compose_demo_en">英語</string>
-    <string name="compose_demo_ar">阿拉伯語</string>
-    <string name="compose_demo_zh_hant">繁體中文</string>
     <string name="compose_demo_current_language">繁體中文</string>
     <string name="compose_demo_about_sdk_version">SDK版本</string>
     <string name="compose_demo_about_im">關於</string>
@@ -42,4 +38,9 @@
     <string name="compose_demo_self_detail_edit_nickname_placeholder">請輸入暱稱</string>
     <string name="compose_demo_self_detail_edit_status_title">設置狀態</string>
     <string name="compose_demo_self_detail_edit_status_placeholder">此刻的想法</string>
+    <string name="compose_demo_style">外觀</string>
+    <string name="compose_demo_message_read_receipt">消息閱讀狀態</string>
+    <string name="compose_demo_message_read_receipt_enabled_desc">關閉後,您收發的消息均不帶消息閱讀狀態,您將無法看到對方是否已讀,同時對方也無法看到您是否已讀。</string>
+    <string name="compose_demo_message_read_receipt_disabled_desc">開啟後,您在群聊中收發的消息均帶有消息閱讀狀態,並且可以看到對方是否已讀。與您單聊的好友若也開啟了消息閱讀狀態,您與好友在單聊中收發的消息也將帶有消息閱讀狀態。</string>
+    <string name="compose_demo_translate_target_language">翻譯目標語言</string>
 </resources>

@@ -16,16 +16,8 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
 import io.trtc.tuikit.atomicx.messagelist.viewmodels.HighlightManager
-import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 import kotlinx.coroutines.delay
 
-val MessageInfo.senderDisplayName: String
-    get() = listOfNotNull(
-        rawMessage?.nameCard,
-        rawMessage?.nickName,
-        rawMessage?.friendRemark,
-        rawMessage?.sender
-    ).firstOrNull { it.isNotEmpty() } ?: ""
 
 @Composable
 fun Modifier.highlightBackground(

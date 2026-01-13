@@ -66,8 +66,19 @@ fun PreviewContent(
     val currentBucket by LocalAlbumPickerViewModel.current.currentBucketFlow.collectAsState()
     var previewList = currentBucket.albumList
     var currentBean by remember { mutableStateOf(previewBean) }
+
+    LaunchedEffect(selectedList) {
+        if (previewBean == null && selectedList.isEmpty()) {
+            onDismiss()
+        }
+    }
+
     if (previewBean == null) {
         previewList = selectedList
+        if (previewList.isEmpty()) {
+            LaunchedEffect(Unit) { onDismiss() }
+            return
+        }
         currentBean = previewList.first()
     }
 ////        Surface(
@@ -81,6 +92,10 @@ fun PreviewContent(
     }, bottomBar = {
         PreviewFooter(onSendClick)
     }) { padding ->
+        if (previewList.isEmpty() || currentBean == null) {
+            LaunchedEffect(Unit) { onDismiss() }
+            return@Scaffold
+        }
         Box(
             modifier = Modifier
                 .background(color = Color(0xFF333333))

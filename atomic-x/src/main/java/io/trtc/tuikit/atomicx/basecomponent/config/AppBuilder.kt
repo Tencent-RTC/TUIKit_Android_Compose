@@ -3,8 +3,11 @@ package io.trtc.tuikit.atomicx.basecomponent.config
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.tencent.mmkv.MMKV
 import io.trtc.tuikit.atomicx.basecomponent.theme.ThemeMode
 import io.trtc.tuikit.atomicx.basecomponent.utils.ContextProvider
+import io.trtc.tuikit.atomicx.basecomponent.utils.appContext
+import java.util.Locale
 
 enum class MessageAlignment {
     LEFT, RIGHT, TWO_SIDED
@@ -23,10 +26,13 @@ enum class GlobalAvatarShape {
 }
 
 object AppBuilderConfig {
+    private const val KEY_TRANSLATE_TARGET_LANGUAGE = "com.atomicx.translateTargetLanguage"
+
     var themeMode: ThemeMode = ThemeMode.SYSTEM
     var primaryColor: String = "#1C66E5"
 
     var messageAlignment: MessageAlignment = MessageAlignment.TWO_SIDED
+    var enableReadReceipt: Boolean = false
     var messageActionList: List<MessageAction> = listOf(MessageAction.COPY, MessageAction.RECALL, MessageAction.DELETE)
 
     var enableCreateConversation: Boolean = true
@@ -43,6 +49,20 @@ object AppBuilderConfig {
     var hideSearch: Boolean = false
 
     var avatarShape: GlobalAvatarShape = GlobalAvatarShape.CIRCULAR
+
+    init {
+        MMKV.initialize(appContext)
+    }
+
+    var translateTargetLanguage: String
+        get() {
+            val saved = MMKV.defaultMMKV().decodeString(KEY_TRANSLATE_TARGET_LANGUAGE, "")
+            if (!saved.isNullOrEmpty()) return saved
+            return Locale.getDefault().language
+        }
+        set(value) {
+            MMKV.defaultMMKV().encode(KEY_TRANSLATE_TARGET_LANGUAGE, value)
+        }
 
     init {
         AppBuilder.loadConfig()
@@ -99,6 +119,10 @@ class AppBuilder private constructor() {
                     "right" -> config.messageAlignment = MessageAlignment.RIGHT
                     "two-sided" -> config.messageAlignment = MessageAlignment.TWO_SIDED
                 }
+            }
+
+            messageList.get("enableReadReceipt")?.asBoolean?.let { enable ->
+                config.enableReadReceipt = enable
             }
 
             messageList.getAsJsonArray("messageActionList")?.let { actionArray ->

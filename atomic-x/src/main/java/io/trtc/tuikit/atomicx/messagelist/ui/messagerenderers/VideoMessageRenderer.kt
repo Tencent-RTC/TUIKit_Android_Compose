@@ -3,9 +3,12 @@ package io.trtc.tuikit.atomicx.messagelist.ui.messagerenderers
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -23,31 +26,29 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import io.trtc.tuikit.atomicx.R
 import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
-import io.trtc.tuikit.atomicx.messagelist.ui.LocalMessageInteraction
-import io.trtc.tuikit.atomicx.messagelist.ui.LocalMessageListViewModel
+import io.trtc.tuikit.atomicx.messagelist.ui.LocalInteractionHandler
 import io.trtc.tuikit.atomicx.messagelist.ui.MessageRenderer
+import io.trtc.tuikit.atomicx.messagelist.ui.widgets.MessageReadReceiptIndicator
 import io.trtc.tuikit.atomicx.messagelist.utils.DateTimeUtils
 import io.trtc.tuikit.atomicx.messagelist.utils.ImageUtils
 import io.trtc.tuikit.atomicxcore.api.message.MessageInfo
 
-class VideoMessageRenderer : MessageRenderer<MessageInfo> {
+class VideoMessageRenderer : MessageRenderer {
     @Composable
     override fun Render(message: MessageInfo) {
         val originalWidth = message.messageBody?.videoSnapshotWidth?.takeIf { it > 0 } ?: 100
         val originalHeight = message.messageBody?.videoSnapshotHeight?.takeIf { it > 0 } ?: 100
         val imageSize = ImageUtils.calculateOptimalSize(originalWidth, originalHeight)
         val context = LocalContext.current
-        val viewModel = LocalMessageListViewModel.current
-        val messageViewModel = LocalMessageListViewModel.current
-        val messageInteraction = LocalMessageInteraction.current
+        val messageInteraction = LocalInteractionHandler.current
         val colors = LocalTheme.current.colors
         LaunchedEffect(Unit) {
-            messageViewModel.downloadVideoSnapShot(message)
+            messageInteraction.onRendered()
         }
 
         Box(modifier = Modifier.pointerInput(Unit) {
             detectTapGestures(onTap = {
-                messageViewModel.downloadOrShowVideo(context, message)
+                messageInteraction.onTap()
             }, onLongPress = {
                 messageInteraction.onLongPress()
             })
@@ -68,16 +69,30 @@ class VideoMessageRenderer : MessageRenderer<MessageInfo> {
                 tint = Color.Unspecified
             )
 
-            Text(
+            Row(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .offset(x = -4.dp, y = -4.dp)
-                    .background(color = colors.bgColorElementMask, shape = RoundedCornerShape(4.dp))
-                    .padding(horizontal = 2.dp),
-                text = DateTimeUtils.formatSmartTime(message.messageBody?.videoDuration),
-                fontSize = 10.sp,
-                color = colors.textColorButton
-            )
+                    .align(Alignment.BottomEnd),
+            ) {
+
+                Text(
+                    modifier = Modifier
+                        .background(color = colors.bgColorElementMask, shape = RoundedCornerShape(4.dp))
+                        .padding(horizontal = 2.dp),
+                    text = DateTimeUtils.formatSmartTime(message.messageBody?.videoDuration),
+                    fontSize = 10.sp,
+                    color = colors.textColorButton
+                )
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                MessageReadReceiptIndicator(
+                    message = message,
+                    modifier = Modifier
+                        .offset(y = -4.dp)
+                        .padding(end = 8.dp)
+                )
+
+            }
         }
     }
 
