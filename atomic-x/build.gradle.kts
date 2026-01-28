@@ -55,7 +55,7 @@ android {
 
 dependencies {
 
-    api("io.trtc.uikit:atomicx-core:3.6+")
+    api("io.trtc.uikit:atomicx-core:3.6.1.66")
     api("com.tencent.imsdk:imsdk-plus:latest.release")
     api("com.tencent.liteav:LiteAVSDK_Professional:12.8.0.19279")
 
