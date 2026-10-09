@@ -5,19 +5,25 @@ import androidx.activity.compose.LocalActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,9 +35,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -39,173 +45,220 @@ import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tencent.mmkv.MMKV
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.ActionItem
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.ActionSheet
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Avatar
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AvatarSize
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Switch
-import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
-import io.trtc.tuikit.atomicx.basecomponent.theme.ThemeMode
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
 import io.trtc.tuikit.atomicxcore.api.login.AllowType
 import io.trtc.tuikit.atomicxcore.api.login.LoginStore
 import io.trtc.tuikit.atomicxcore.api.login.UserProfile
-import io.trtc.tuikit.chat.login.LoginActivity
+import io.trtc.tuikit.chat.common.AppConstants
+import io.trtc.tuikit.chat.common.DemoTabState
+import io.trtc.tuikit.chat.login.LocalLoginActivity
+import io.trtc.tuikit.chat.settings.PrimaryColorPickerDialog
+import io.trtc.tuikit.chat.settings.VoiceMessageSettingActivity
+import io.trtc.tuikit.chat.settings.normalizeHex
+import io.trtc.tuikit.chat.uikit.components.config.AppBuilderConfig
+import io.trtc.tuikit.chat.uikit.components.theme.LocalTheme
+import io.trtc.tuikit.chat.uikit.components.theme.ThemeMode
+import io.trtc.tuikit.chat.uikit.components.widgets.ActionItem
+import io.trtc.tuikit.chat.uikit.components.widgets.ActionSheet
+import io.trtc.tuikit.chat.uikit.components.widgets.Avatar
+import io.trtc.tuikit.chat.uikit.components.widgets.AvatarSize
+import io.trtc.tuikit.chat.uikit.components.widgets.FullScreenDialog
+import io.trtc.tuikit.chat.uikit.components.widgets.Switch
 import io.trtc.tuikit.chat.viewmodels.SettingsViewModel
-import io.trtc.tuikit.chat.viewmodels.TranslateLanguageOption
 import io.trtc.tuikit.chat.viewmodels.displayName
+
+private const val DEFAULT_PRIMARY_COLOR = "#1C66E5"
+private val PRIMARY_COLOR_PREVIEW_SIZE = 22.dp
+private val PRIMARY_COLOR_PREVIEW_STROKE = 1.5.dp
+private val SETTINGS_GROUP_SPACER = 10.dp
+private val SETTINGS_DIVIDER_THICKNESS = 0.5.dp
+private val SETTINGS_ITEM_MIN_HEIGHT = 48.dp
+private val LOGOUT_CORNER_RADIUS = 8.dp
 
 @Composable
 fun SettingsScreen() {
-    val colors = LocalTheme.current.colors
+    val themeState = LocalTheme.current
+    val colors = themeState.colors
     val activity = LocalActivity.current
     var showSelfDetailDialog by remember { mutableStateOf(false) }
     val settingsViewModel: SettingsViewModel = viewModel()
     val userInfo by settingsViewModel.loginUserInfo.collectAsState()
     val enableReadReceipt by settingsViewModel.enableReadReceipt.collectAsState()
     val translateTargetLanguage by settingsViewModel.translateTargetLanguage.collectAsState()
-    Column(
+    var showFriendAddOpt by remember { mutableStateOf(false) }
+    var showThemeSelector by remember { mutableStateOf(false) }
+    var showLanguageSelector by remember { mutableStateOf(false) }
+    var showTranslateLanguageSelector by remember { mutableStateOf(false) }
+    var showColorPicker by remember { mutableStateOf(false) }
+    var showCallsTab by remember {
+        mutableStateOf(MMKV.defaultMMKV().decodeBool(AppConstants.KEY_SHOW_CALLS_TAB, true))
+    }
+    val displayName = userInfo?.displayName ?: ""
+    val userId = userInfo?.userID ?: ""
+    val selfSignature = userInfo?.selfSignature ?: ""
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = colors.bgColorOperate)
+            .background(color = colors.bgColorTopBar)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp)
-                .clickable(indication = null, interactionSource = null) {
-                    showSelfDetailDialog = true
-                },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Avatar(
-                url = userInfo?.avatarURL,
-                name = userInfo?.displayName ?: "",
-                size = AvatarSize.XL,
-                onClick = {
-                    showSelfDetailDialog = true
-                }
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = maxHeight)
+                    .verticalScroll(rememberScrollState())
             ) {
-                Text(
-                    text = userInfo?.displayName ?: "",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Medium,
-                    letterSpacing = (-0.24).sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = colors.textColorPrimary
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = colors.bgColorOperate)
+                        .clickable { showSelfDetailDialog = true }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Avatar(
+                        url = userInfo?.avatarURL,
+                        name = displayName,
+                        size = AvatarSize.L,
+                        onClick = { showSelfDetailDialog = true }
+                    )
 
-                Text(
-                    text = "ID：${userInfo?.userID}",
-                    fontSize = 12.sp,
-                    color = colors.textColorSecondary
-                )
+                    Spacer(modifier = Modifier.width(16.dp))
 
-                Text(
-                    text = "${stringResource(R.string.compose_demo_self_detail_status)}：${userInfo?.selfSignature}",
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = colors.textColorSecondary
-                )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = displayName,
+                            fontSize = 18.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Start,
+                            color = colors.textColorPrimary
+                        )
+                        Text(
+                            text = "ID：$userId",
+                            fontSize = 13.sp,
+                            textAlign = TextAlign.Start,
+                            color = colors.textColorTertiary
+                        )
+                        Text(
+                            text = "${stringResource(R.string.compose_demo_self_detail_status)}：$selfSignature",
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Start,
+                            color = colors.textColorTertiary
+                        )
+                    }
+                }
 
+                SettingsGroupSpacer()
+
+                SettingsGroup {
+                    SettingsItem(
+                        title = stringResource(R.string.compose_demo_theme),
+                        value = getThemeString(themeState.currentMode),
+                        showDivider = true,
+                        onClick = { showThemeSelector = true }
+                    )
+                    SettingsItem(
+                        title = stringResource(R.string.compose_demo_primary_color),
+                        value = "",
+                        showDivider = true,
+                        onClick = { showColorPicker = true },
+                        trailingContent = {
+                            PrimaryColorPreview(
+                                hex = themeState.currentPrimaryColor ?: DEFAULT_PRIMARY_COLOR
+                            )
+                        }
+                    )
+                    SettingsItem(
+                        title = stringResource(R.string.compose_demo_language),
+                        value = currentLanguageDisplayName(),
+                        showDivider = false,
+                        onClick = { showLanguageSelector = true }
+                    )
+                }
+
+                SettingsGroupSpacer()
+
+                SettingsGroup {
+                    SettingsItem(
+                        title = stringResource(R.string.compose_demo_add_rule),
+                        value = getFriendAddOptString(userInfo?.allowType),
+                        showDivider = true,
+                        onClick = { showFriendAddOpt = true }
+                    )
+                    ReadReceiptToggleItem(
+                        enabled = enableReadReceipt,
+                        showDivider = true,
+                        onToggle = { newValue ->
+                            settingsViewModel.updateReadReceiptEnabled(newValue)
+                        }
+                    )
+                    SettingsItem(
+                        title = stringResource(R.string.compose_demo_translate_target_language),
+                        value = settingsViewModel.getTranslateLanguageDisplayName(translateTargetLanguage),
+                        showDivider = true,
+                        onClick = { showTranslateLanguageSelector = true }
+                    )
+                    ShowCallsTabToggleItem(
+                        enabled = showCallsTab,
+                        onToggle = { newValue ->
+                            showCallsTab = newValue
+                            DemoTabState.setShowCallsTab(newValue)
+                        }
+                    )
+                }
+
+                SettingsGroupSpacer()
+
+                SettingsGroup {
+                    SettingsItem(
+                        title = stringResource(R.string.compose_demo_voice_message_settings),
+                        value = "",
+                        showDivider = false,
+                        onClick = {
+                            activity?.let { VoiceMessageSettingActivity.start(it) }
+                        }
+                    )
+                }
+
+                SettingsGroupSpacer()
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 20.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(LOGOUT_CORNER_RADIUS))
+                        .background(color = colors.bgColorInput)
+                        .clickable {
+                            LoginStore.shared.logout(object : CompletionHandler {
+                                override fun onSuccess() {
+                                    MMKV.defaultMMKV().encode(AppConstants.KEY_LOGIN_USER, "")
+                                    MMKV.defaultMMKV().encode(AppConstants.KEY_LOGIN_TYPE, "")
+                                    activity?.startActivity(Intent(activity, LocalLoginActivity::class.java).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                    })
+                                    activity?.finish()
+                                }
+
+                                override fun onFailure(code: Int, desc: String) {
+                                }
+                            })
+                        }
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.compose_demo_logout),
+                        fontSize = 16.sp,
+                        color = colors.textColorError
+                    )
+                }
             }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        var showFriendAddOpt by remember { mutableStateOf(false) }
-        var showThemeSelector by remember { mutableStateOf(false) }
-        var showLanguageSelector by remember { mutableStateOf(false) }
-        var showTranslateLanguageSelector by remember { mutableStateOf(false) }
-
-        Column(
-            modifier = Modifier.padding()
-        ) {
-
-            SettingsItem(
-                title = stringResource(R.string.compose_demo_theme),
-                value = getThemeString(LocalTheme.current.currentMode),
-                showDivider = true,
-                onClick = {
-                    showThemeSelector = true
-                }
-            )
-
-            SettingsItem(
-                title = stringResource(R.string.compose_demo_language),
-                value = stringResource(R.string.compose_demo_current_language),
-                showDivider = false,
-                onClick = {
-                    showLanguageSelector = true
-                }
-            )
-        }
-
-        Column(
-            modifier = Modifier.padding()
-        ) {
-            SettingsItem(
-                title = stringResource(R.string.compose_demo_add_rule),
-                value = getFriendAddOptString(userInfo?.allowType),
-                showDivider = true,
-                onClick = {
-                    showFriendAddOpt = true
-                }
-            )
-
-            ReadReceiptToggleItem(
-                enabled = enableReadReceipt,
-                onToggle = { newValue ->
-                    settingsViewModel.updateReadReceiptEnabled(newValue)
-                }
-            )
-
-            SettingsItem(
-                title = stringResource(R.string.compose_demo_translate_target_language),
-                value = settingsViewModel.getTranslateLanguageDisplayName(translateTargetLanguage),
-                showDivider = false,
-                onClick = {
-                    showTranslateLanguageSelector = true
-                }
-            )
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 20.dp)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .clickable {
-                    LoginStore.shared.logout(object : CompletionHandler {
-                        override fun onSuccess() {
-                            MMKV.defaultMMKV().encode("LoginUser", "")
-                            activity?.startActivity(Intent(activity, LoginActivity::class.java))
-                            activity?.finish()
-                        }
-
-                        override fun onFailure(code: Int, desc: String) {
-                        }
-                    })
-                }
-                .background(color = colors.bgColorInput)
-                .padding(vertical = 10.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(R.string.compose_demo_logout),
-                fontSize = 16.sp,
-                color = colors.textColorError
-            )
         }
 
         ActionSheet(
@@ -228,7 +281,6 @@ fun SettingsScreen() {
             }
             LoginStore.shared.setSelfInfo(userProfile, object : CompletionHandler {
                 override fun onSuccess() {
-
                 }
 
                 override fun onFailure(code: Int, desc: String) {
@@ -236,33 +288,43 @@ fun SettingsScreen() {
             })
         }
 
-        val themeState = LocalTheme.current
         ActionSheet(
-            showThemeSelector, options = listOf(
-                ActionItem(
-                    text = stringResource(R.string.compose_demo_theme_custom),
-                    value = "#Custom"
-                ),
+            isVisible = showThemeSelector,
+            options = listOf(
                 ActionItem(text = getThemeString(ThemeMode.SYSTEM), value = ThemeMode.SYSTEM),
                 ActionItem(text = getThemeString(ThemeMode.LIGHT), value = ThemeMode.LIGHT),
                 ActionItem(text = getThemeString(ThemeMode.DARK), value = ThemeMode.DARK),
-            ), onDismiss = { showThemeSelector = false }) {
-            if (it.value == "#Custom") {
-                val color = (0..0xFFFFFF).random()
-                themeState.setPrimaryColor("#${color.toString(16).padStart(6, '0')}")
-            } else {
-                themeState.setThemeMode(it.value as ThemeMode)
-            }
+            ),
+            onDismiss = { showThemeSelector = false }
+        ) {
+            themeState.setThemeMode(it.value as ThemeMode)
+        }
+
+        if (showColorPicker) {
+            PrimaryColorPickerDialog(
+                selectedHex = themeState.currentPrimaryColor ?: DEFAULT_PRIMARY_COLOR,
+                onDismiss = { showColorPicker = false },
+                onColorSelected = { hex ->
+                    themeState.setPrimaryColor(hex)
+                    AppBuilderConfig.primaryColor = hex
+                }
+            )
         }
 
         ActionSheet(
             showLanguageSelector, options = listOf(
                 ActionItem(text = stringResource(R.string.compose_demo_zh_hans), value = "zh"),
-                ActionItem(text = stringResource(R.string.compose_demo_zh_hant), value = "zh-hk"),
+                ActionItem(text = stringResource(R.string.compose_demo_zh_hant), value = "zh-Hant"),
                 ActionItem(text = stringResource(R.string.compose_demo_en), value = "en"),
                 ActionItem(text = stringResource(R.string.compose_demo_ar), value = "ar"),
             ), onDismiss = { showLanguageSelector = false }) {
-            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(it.value.toString()))
+            val tag = it.value.toString()
+            val targetLocales = LocaleListCompat.forLanguageTags(tag)
+            MMKV.defaultMMKV().encode(AppConstants.KEY_APP_LANGUAGE, tag)
+            if (AppCompatDelegate.getApplicationLocales() == targetLocales) {
+                return@ActionSheet
+            }
+            AppCompatDelegate.setApplicationLocales(targetLocales)
             val viewModelStore = (activity as AppCompatActivity).viewModelStore
             viewModelStore.clear()
             activity.recreate()
@@ -283,8 +345,40 @@ fun SettingsScreen() {
         FullScreenDialog(onDismissRequest = { showSelfDetailDialog = false }) {
             SelfDetailScreen(onDismiss = { showSelfDetailDialog = false })
         }
-
     }
+}
+
+@Composable
+private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
+    val colors = LocalTheme.current.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(color = colors.bgColorOperate),
+        content = content
+    )
+}
+
+@Composable
+private fun SettingsGroupSpacer() {
+    val colors = LocalTheme.current.colors
+    Spacer(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(SETTINGS_GROUP_SPACER)
+            .background(color = colors.bgColorTopBar)
+    )
+}
+
+@Composable
+private fun SettingsDivider() {
+    val colors = LocalTheme.current.colors
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(SETTINGS_DIVIDER_THICKNESS)
+            .background(color = colors.strokeColorPrimary)
+    )
 }
 
 @Composable
@@ -293,35 +387,36 @@ fun SettingsItem(
     value: String,
     showDivider: Boolean,
     showArrow: Boolean = true,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    trailingContent: (@Composable () -> Unit)? = null
 ) {
     val colors = LocalTheme.current.colors
     Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(min = SETTINGS_ITEM_MIN_HEIGHT)
                 .clickable { onClick() }
-                .padding(vertical = 12.dp, horizontal = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = title,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.W400,
                 maxLines = 1,
-                color = colors.textColorSecondary,
+                textAlign = TextAlign.Start,
+                color = colors.textColorSecondary
             )
-
-            Row(
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 8.dp)
-                    .weight(1f),
-                horizontalArrangement = Arrangement.End
+                    .weight(1f)
+                    .padding(start = 16.dp),
+                contentAlignment = Alignment.CenterEnd
             ) {
-                if (value.isNotEmpty()) {
+                if (trailingContent != null) {
+                    trailingContent()
+                } else if (value.isNotEmpty()) {
                     Text(
-                        modifier = Modifier.weight(1f),
                         text = value,
                         fontSize = 16.sp,
                         maxLines = 1,
@@ -333,23 +428,40 @@ fun SettingsItem(
             }
             if (showArrow) {
                 Icon(
-                    painter = painterResource(id = R.drawable.app_navigation_right_icon),
-                    contentDescription = "Arrow",
+                    painter = painterResource(id = R.drawable.demo_ic_arrow_right),
+                    contentDescription = null,
                     tint = colors.textColorTertiary,
                     modifier = Modifier
+                        .padding(start = 8.dp)
                         .width(7.dp)
                         .height(12.dp)
                 )
             }
         }
-
         if (showDivider) {
-            HorizontalDivider(
-                color = colors.strokeColorSecondary,
-                thickness = 1.dp
-            )
+            SettingsDivider()
         }
     }
+}
+
+@Composable
+private fun PrimaryColorPreview(hex: String) {
+    val colors = LocalTheme.current.colors
+    val previewColor = remember(hex) {
+        val parsed = runCatching {
+            android.graphics.Color.parseColor(normalizeHex(hex))
+        }.getOrElse {
+            android.graphics.Color.parseColor(DEFAULT_PRIMARY_COLOR)
+        }
+        Color(parsed)
+    }
+    Box(
+        modifier = Modifier
+            .size(PRIMARY_COLOR_PREVIEW_SIZE)
+            .clip(CircleShape)
+            .background(previewColor)
+            .border(PRIMARY_COLOR_PREVIEW_STROKE, colors.strokeColorPrimary, CircleShape)
+    )
 }
 
 @Composable
@@ -372,8 +484,35 @@ fun getThemeString(themeScheme: ThemeMode): String {
 }
 
 @Composable
+private fun currentLanguageDisplayName(): String {
+    val persistedTag = MMKV.defaultMMKV().decodeString(AppConstants.KEY_APP_LANGUAGE, "").orEmpty()
+    val currentTag = if (persistedTag.isNotBlank()) {
+        persistedTag
+    } else {
+        AppCompatDelegate.getApplicationLocales().toLanguageTags()
+    }
+    return when {
+        currentTag.isBlank() -> stringResource(R.string.compose_demo_current_language)
+        isTraditionalChinese(currentTag) -> stringResource(R.string.compose_demo_zh_hant)
+        currentTag.startsWith("zh", ignoreCase = true) -> stringResource(R.string.compose_demo_zh_hans)
+        currentTag.startsWith("en", ignoreCase = true) -> stringResource(R.string.compose_demo_en)
+        currentTag.startsWith("ar", ignoreCase = true) -> stringResource(R.string.compose_demo_ar)
+        else -> stringResource(R.string.compose_demo_current_language)
+    }
+}
+
+private fun isTraditionalChinese(languageTag: String): Boolean {
+    val normalizedTag = languageTag.lowercase()
+    return normalizedTag.contains("hant") ||
+        normalizedTag.contains("zh-hk") ||
+        normalizedTag.contains("zh-tw") ||
+        normalizedTag.contains("zh-mo")
+}
+
+@Composable
 fun ReadReceiptToggleItem(
     enabled: Boolean,
+    showDivider: Boolean = false,
     onToggle: (Boolean) -> Unit
 ) {
     val colors = LocalTheme.current.colors
@@ -381,7 +520,7 @@ fun ReadReceiptToggleItem(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp, horizontal = 16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -390,24 +529,24 @@ fun ReadReceiptToggleItem(
                 Text(
                     text = stringResource(R.string.compose_demo_message_read_receipt),
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.W400,
                     maxLines = 1,
+                    textAlign = TextAlign.Start,
                     color = colors.textColorSecondary,
                     modifier = Modifier.weight(1f)
                 )
-
                 Switch(checked = enabled, onCheckedChange = onToggle)
-
             }
-
             Spacer(modifier = Modifier.height(8.dp))
-
             Text(
                 text = getReadReceiptDescription(enabled),
                 fontSize = 12.sp,
-                color = colors.textColorSecondary,
-                lineHeight = 16.sp
+                lineHeight = 14.sp,
+                textAlign = TextAlign.Start,
+                color = colors.textColorTertiary
             )
+        }
+        if (showDivider) {
+            SettingsDivider()
         }
     }
 }
@@ -418,5 +557,30 @@ fun getReadReceiptDescription(enabled: Boolean): String {
         stringResource(R.string.compose_demo_message_read_receipt_enabled_desc)
     } else {
         stringResource(R.string.compose_demo_message_read_receipt_disabled_desc)
+    }
+}
+
+@Composable
+fun ShowCallsTabToggleItem(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    val colors = LocalTheme.current.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = SETTINGS_ITEM_MIN_HEIGHT)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(R.string.compose_demo_settings_show_calls),
+            fontSize = 16.sp,
+            maxLines = 1,
+            textAlign = TextAlign.Start,
+            color = colors.textColorSecondary,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(checked = enabled, onCheckedChange = onToggle)
     }
 }
