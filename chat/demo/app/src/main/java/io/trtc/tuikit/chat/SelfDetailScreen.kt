@@ -40,15 +40,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.ActionItem
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.ActionSheet
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.Avatar
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.AvatarSize
-import io.trtc.tuikit.atomicx.basecomponent.basiccontrols.FullScreenDialog
-import io.trtc.tuikit.atomicx.basecomponent.theme.LocalTheme
-import io.trtc.tuikit.atomicx.chatsetting.ui.AvatarSelector
-import io.trtc.tuikit.atomicx.chatsetting.ui.TextInputBottomSheet
-import io.trtc.tuikit.atomicx.chatsetting.viewmodels.getUserAvatarUrls
+import io.trtc.tuikit.chat.uikit.components.widgets.ActionItem
+import io.trtc.tuikit.chat.uikit.components.widgets.ActionSheet
+import io.trtc.tuikit.chat.uikit.components.widgets.Avatar
+import io.trtc.tuikit.chat.uikit.components.widgets.AvatarSize
+import io.trtc.tuikit.chat.uikit.components.widgets.FullScreenDialog
+import io.trtc.tuikit.chat.uikit.components.theme.LocalTheme
+import io.trtc.tuikit.chat.uikit.components.chatsetting.ui.AvatarSelector
+import io.trtc.tuikit.chat.uikit.components.chatsetting.ui.TextInputBottomSheet
+import io.trtc.tuikit.chat.uikit.components.chatsetting.viewmodel.getUserAvatarUrls
 import io.trtc.tuikit.atomicxcore.api.CompletionHandler
 import io.trtc.tuikit.atomicxcore.api.login.Gender
 import io.trtc.tuikit.atomicxcore.api.login.LoginStore
@@ -331,7 +331,7 @@ fun SelfDetailHeader(
                 )
 
                 Text(
-                    text = stringResource(io.trtc.tuikit.atomicx.R.string.chat_setting_back),
+                    text = stringResource(io.trtc.tuikit.chat.uikit.compose.R.string.chat_setting_back),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.W400,
                     color = colors.textColorLink

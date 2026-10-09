@@ -1,53 +1,154 @@
-# TUIKit Android Compose
+# TUIKit_Android_Compose
 
-This document introduces **how to quickly run the TUIKit Compose Demo.**
+English | [简体中文](README.cn.md)
 
-> Please Attention: 
-> In respect for the copyright of the emoji design, This project does not include the cutouts of large emoji elements. Please replace them with your own designed or copyrighted emoji packs before the official launch for commercial use. The default small yellow face emoji pack is copyrighted by Tencent Cloud and can be authorized for a fee. If you wish to obtain authorization, please [Contact Us](https://trtc.io/contact).
-> 
+## Overview
+
+TUIKit_Android_Compose is a UI component library built with Jetpack Compose on top of Tencent Cloud's `AtomicXCore` SDK. `AtomicXCore` integrates the core capabilities of Tencent Cloud Instant Messaging (IM), Real-Time Communication (TRTC), and Audio/Video Calling (TUICallEngine), providing a state-driven API design.
+
+TUIKit_Android_Compose provides a set of pre-built user interfaces (UI) on top of the core capabilities offered by `AtomicXCore`, enabling you to quickly integrate instant messaging and audio/video calling into your Android applications without worrying about complex backend logic and state management.
+
+TUIKit_Android_Compose is the Jetpack Compose edition of [TUIKit_Android](https://github.com/Tencent-RTC/TUIKit_Android) and currently covers the Chat and Call scenarios.
+
+> **Note:**
+> In respect for the copyright of the emoji design, this project does not include the cutouts of large emoji elements. Please replace them with your own designed or copyrighted emoji packs before the official launch for commercial use. The default small yellow face emoji pack is copyrighted by Tencent Cloud and can be authorized for a fee. If you wish to obtain authorization, please [Contact Us](https://trtc.io/contact).
+>
 > <img src="https://qcloudimg.tencent-cloud.cn/image/document/6438e8feb7bba909511e0d798dfaf91d.png" width="300px" />
-> 
 
+## Features
 
-### Step 1. Create an App
-1. Log in to the [Chat Console](https://console.trtc.io/). If you already have an app, record its SDKAppID.
-2. On the **Application List** page, click **Create Application**.
-3. In the **Create Application** dialog box, enter the app information and click **Confirm**.
-> After the app is created, an app ID (SDKAppID) will be automatically generated, which should be noted down.
+TUIKit_Android_Compose provides complete UI implementations for the following core business scenarios based on `AtomicXCore`:
 
-### Step 2: Obtain Key Information
+* **Instant Messaging (Chat):**
 
-1. Click **Application Configuration** in the row of the target app to enter the app details page.
-2. Click **View Key** and copy and save the key information.
-> Please store the key information properly to prevent leakage.
+    * **Conversation Management:** Support fetching and managing conversation lists.
+    * **Message Sending/Receiving:** Support C2C (one-to-one) and Group chat scenarios, with multiple message types including text, images, voice, video, files, etc.
+    * **Message Interaction:** Support quoting, forwarding, recalling, read receipts, reactions, and @mentions.
+    * **AI Capabilities:** Support voice-to-text, translation, and text-to-speech for messages.
+    * **Search:** Support searching messages, contacts, and groups.
+    * **Contact Management:** Support friend, friend request, and blacklist management.
+    * **Group Management:** Support group profile, group member, and group settings management.
 
-### Step 3: Download and Configure the Demo Source Code
+* **Audio/Video Calling:**
 
-1. Clone this TUIKit_Android_Compose project.
-2. Open the Android project and locate `chat/demo/app/src/main/java/io/trtc/tuikit/chat/signature/GenerateTestUserSig.java`.
-3. Set relevant parameters in the `GenerateTestUserSig.java` file:
+    * **Basic Calling:** Support 1v1 and multi-party audio/video calls.
+    * **Call Management:** Support answering, rejecting, and hanging up calls.
+    * **Device Management:** Support camera and microphone control during calls.
+    * **Call History:** Support querying and deleting call records.
 
-- SDKAPPID: set it to the SDKAppID obtained in [Step 1](#step1).
-- SECRETKEY: enter the key obtained in [Step 2](#step2).
+## Quick Start
 
-<img src="https://sdk-im-1252463788.cos.ap-hongkong.myqcloud.com/tools/resource/chat/SDKAppID_SecretKey_Android.png" width="800"/>
+### 1. Environment Setup
 
+* Android Studio Ladybug or newer
+* JDK 17
+* An Android device or emulator running Android 6.0 (API level 23) or higher.
 
-> In this document, the method to obtain UserSig is to configure a SECRETKEY in the client code. In this method, the SECRETKEY is vulnerable to decompilation and reverse engineering. Once your SECRETKEY is leaked, attackers can steal your Tencent Cloud traffic. Therefore, **this method is only suitable for locally running a demo project and feature debugging**.
-> The correct `UserSig` distribution method is to integrate the calculation code of `UserSig` into your server and provide an application-oriented API. When `UserSig` is needed, your app can send a request to the business server for a dynamic `UserSig`. For more information, please see [How do I calculate UserSig on the server?](https://trtc.io/document/34385?product=chat&menulabel=serverapis).
+The Gradle Wrapper (Gradle 8.9) is included. The project uses Android Gradle Plugin 8.6.1 and Kotlin 2.0.21.
 
-### Step 4: Compile and Run the Demo (Android)
-1. Open `TUIKit_android_compose/chat/demo` with Android Studio.
-2. Wait for Gradle sync to complete.
-3. Connect an Android device or start an emulator (Android 8.0+ recommended).
-4. Select the `app` run configuration and click Run.
+### 2. Clone Repository
 
-When you run it successfully, you'll see this UI:
+```bash
+git clone https://github.com/Tencent-RTC/TUIKit_Android_Compose.git
+```
 
-<table border="1" bordercolor="#eeeeee" style="border-collapse: collapse;">
-  <tr>
-    <td align="center" style="padding: 5px;">
-      <img src="https://sdk-im-1252463788.cos.accelerate.myqcloud.com/tools/resource/chat/TUIKit_Android_Compose.png" width="300"/>
-    </td>
-  </tr>
-</table>
+### 3. Configure SDKAppID and SecretKey
+
+1. Log in to the [Chat Console](https://console.trtc.io/), create an application (or select an existing one), and note down its **SDKAppID** and **SecretKey**.
+2. Open `chat/demo/app/src/main/java/io/trtc/tuikit/chat/signature/GenerateTestUserSig.java` and fill in both values:
+
+   ```java
+   public static final int SDKAPPID = 1400000001;              // your SDKAppID
+   private static final String SECRETKEY = "your_secret_key";   // your SecretKey
+   ```
+
+   Both values are intentionally left empty in this repository, so the demo will not compile until you fill them in.
+
+> The demo calculates `UserSig` on the client only to keep the first run simple. A SecretKey shipped inside an APK can be extracted by decompiling it, so this method is only suitable for running the demo and debugging features. In production, `UserSig` must be issued by your own server. For details, see [How do I calculate UserSig on the server?](https://trtc.io/document/34385?product=chat&menulabel=serverapis)
+
+### 4. Run Project
+
+1. Open the `chat/demo` directory in Android Studio and wait for the Gradle sync to complete.
+2. Select the `app` run configuration and a device, then click Run.
+
+To build from the command line:
+
+```bash
+cd chat/demo
+./gradlew :app:assembleDebug
+```
+
+See the [Chat Demo README](chat/demo/README.md) for more about the demo.
+
+## Architecture
+
+The architecture design of `TUIKit_Android_Compose` follows layered principles:
+
+1. **TUIKit_Android_Compose (UI Layer):**
+
+    * Provides pre-built, reusable UI components. The Chat components (`chat/uikit`) are built with Jetpack Compose.
+    * Audio/video calling is provided by TUICallKit (`call/tuicallkit-kt`). It is implemented with Android Views, shared with TUIKit_Android, and integrated into the Compose demo.
+    * `atomic_x` is the base module shared with TUIKit_Android, providing theme tokens, permission requests, a floating window, and common utilities.
+    * Subscribes to `Store` in `AtomicXCore` to get state and update UI, and calls `Store` methods to respond to user operations.
+
+2. **AtomicXCore (Core Layer):**
+
+    * **Stores:** (such as `ConversationListStore`, `MessageListStore`, `ContactStore`, `GroupStore`) responsible for managing business logic and state.
+    * **Engine Wrapper:** Encapsulates the underlying `IMSDK`, `TUICallEngine`, and `RTCRoomEngine`, providing unified APIs.
+
+3. **Tencent Cloud SDK (Engine Layer):**
+
+    * `IMSDK`: Provides instant messaging capabilities.
+    * `TUICallEngine` & `RTCRoomEngine`: Provide underlying real-time audio/video capabilities.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## Project Structure
+
+```
+TUIKit_Android_Compose/
+├── atomic_x/              # Base module shared with TUIKit_Android
+├── call/
+│   └── tuicallkit-kt/     # TUICallKit: audio/video calling UI
+└── chat/
+    ├── uikit/             # Chat UI components built with Jetpack Compose
+    └── demo/              # Demo application (standalone Gradle project)
+        ├── build.gradle.kts
+        ├── settings.gradle.kts
+        └── app/
+```
+
+`chat/demo/settings.gradle.kts` includes `chat/uikit`, `atomic_x`, and `call/tuicallkit-kt` as local modules. All other dependencies, such as IMSDK, AtomicXCore, RTCRoomEngine, and LiteAVSDK, are resolved from Maven.
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to submit pull requests, report issues, and contribute to the project.
+
+### Development Workflow
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes following our [CONTRIBUTING](./CONTRIBUTING.md)
+4. Add tests for your changes
+5. Ensure all tests pass and the demo builds
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+## Support
+
+- **Issues:** [GitHub Issues](https://github.com/Tencent-RTC/TUIKit_Android_Compose/issues)
+- **Community:** [Tencent Cloud Developer Community](https://cloud.tencent.com/developer)
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for a detailed history of changes to this project.
+
+## Acknowledgments
+
+- Built with [Tencent Cloud Chat](https://cloud.tencent.com/product/im) and [Tencent Cloud TRTC](https://cloud.tencent.com/product/trtc)
+- UI framework powered by [Jetpack Compose](https://developer.android.com/compose)

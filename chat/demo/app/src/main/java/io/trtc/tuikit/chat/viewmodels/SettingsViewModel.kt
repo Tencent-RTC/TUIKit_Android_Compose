@@ -2,7 +2,7 @@ package io.trtc.tuikit.chat.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.tencent.mmkv.MMKV
-import io.trtc.tuikit.atomicx.basecomponent.config.AppBuilderConfig
+import io.trtc.tuikit.chat.uikit.components.config.AppBuilderConfig
 import io.trtc.tuikit.atomicxcore.api.login.LoginStore
 import io.trtc.tuikit.atomicxcore.api.login.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow

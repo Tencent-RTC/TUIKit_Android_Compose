@@ -1,0 +1,63 @@
+<resources>
+    <string name="callkit_enter_pip_mode_fail_hint">进入画中画失败，请检查是否开启权限</string>
+    <string name="callkit_invite_audio_call">邀请你语音通话</string>
+    <string name="callkit_invite_video_call">邀请你视频通话</string>
+    <string name="callkit_invite_multi_call">邀请你加入多人通话</string>
+    <string name="callkit_group_id_is_empty">群ID为空</string>
+    <string name="callkit_group_title_add_user">添加成员</string>
+    <string name="callkit_group_hint_you">(你)</string>
+    <string name="callkit_group_btn_ok">确定</string>
+    <string name="callkit_record_call_title">最近通话</string>
+    <string name="callkit_record_call_delete">删除</string>
+    <string name="callkit_record_dialog_message">清除所有记录</string>
+    <string name="callkit_record_dialog_cancel">取消</string>
+    <string name="callkit_record_tab_title_all">所有通话</string>
+    <string name="callkit_record_tab_title_miss">未接来电</string>
+    <string name="callkit_record_done">完成</string>
+    <string name="callkit_record_clear">清除</string>
+    <string name="callkit_group_recall_unsupport">多人通话记录不支持重呼</string>
+    <string name="callkit_record_result_unknown">未知通话</string>
+    <string name="callkit_record_result_missed">未接</string>
+    <string name="callkit_record_result_incoming">来电</string>
+    <string name="callkit_record_result_outgoing">去电</string>
+    <string name="callkit_permission_camera">摄像头</string>
+    <string name="callkit_permission_microphone">麦克风</string>
+    <string name="callkit_permission_bluetooth">蓝牙</string>
+    <string name="callkit_permission_separator">、</string>
+    <string name="callkit_permission_tips">%s权限未开启，无法开启音视频通话。</string>
+    <string name="callkit_permission_title">%s申请获取%s权限</string>
+    <string name="callkit_permission_camera_reason">前往「设置 > %s」中打开相机权限。</string>
+    <string name="callkit_permission_mic_reason">前往「设置 > %s」中打开麦克风权限。</string>
+    <string name="callkit_permission_bluetooth_reason">为确保您在音视频通话中可正常连接蓝牙功能进行沟通，我们需要向您申请查找与连接附近设备的权限。</string>
+
+    <string name="callkit_package_not_purchased">此功能需要音视频通话能力套餐支持，为不影响您的使用，建议您前往腾讯云·实时音视频控制台，开通免费体验或选购正式套餐</string>
+    <string name="callkit_package_not_support">您当前的套餐类型暂不支持此功能，为解锁更多能力，建议您前往腾讯云·实时音视频控制台升级套餐</string>
+    <string name="callkit_have_a_new_call">您有一个新的通话</string>
+
+    <string name="callkit_error_in_peer_blacklist">发起通话失败，用户在黑名单中，禁止发起！</string>
+    <string name="callkit_error_invalid_login">发起通话失败，请检查登录状态后重试</string>
+    <string name="callkit_error_parameter_invalid">参数错误</string>
+    <string name="callkit_error_currently_in_a_call">您当前正在通话中，请结束通话后再拨打</string>
+    <string name="callkit_error_request_repeated">当前方法正在执行中，请勿重复调用</string>
+    <string name="callkit_error_scene_not_support">当前通话场景，不支持该功能</string>
+    <string name="callkit_join_group_call">加入</string>
+    <string name="callkit_join_group_call_users">%d人正在通话中</string>
+    <string name="callkit_notification_channel_group_id">通话管理</string>
+    <string name="callkit_notification_channel_id">音视频通话</string>
+
+    <string name="callkit_video_call">视频通话</string>
+    <string name="callkit_audio_call">语音通话</string>
+    <string name="callkit_user_exceed_limit">当前通话最多支持 9 人同时在线</string>
+    <string name="callkit_toast_other_party_hung_up">对方已挂断，通话结束</string>
+    <string name="callkit_toast_other_party_declined">对方拒绝了您的通话请求</string>
+    <string name="callkit_toast_other_party_no_response">对方未接听，请稍后再试</string>
+    <string name="callkit_toast_other_party_busy">对方正在忙，请稍后再试</string>
+    <string name="callkit_toast_other_party_cancelled">对方已取消通话</string>
+    <string name="callkit_toast_error_call_user_not_exist">用户不存在，请确认该用户是否已注册或是否输入非法字符</string>
+    <string name="callkit_toast_error_camera_occupied">摄像头被系统通话占用</string>
+    <string name="callkit_toast_error_microphone_occupied">麦克风被系统通话占用</string>
+    <string name="callkit_toast_error_call_failed">加入通话失败</string>
+    <string name="callkit_toast_error_call_self">不能呼叫自己</string>
+    <string name="callkit_toast_error_already_in_call">您当前正在通话中，请结束通话后再拨打</string>
+    <string name="callkit_toast_error_group_call_has_active_call">该群组已有通话正在进行中</string>
+</resources>
